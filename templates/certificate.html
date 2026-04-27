@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuest Certificate - {{ child_name }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: #f0f4ff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .cert-wrapper {
+            width: 210mm;
+            max-width: 100%;
+            aspect-ratio: 297 / 210;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 20px 80px rgba(102, 126, 234, 0.25);
+        }
+
+        /* Border */
+        .cert-border {
+            position: absolute;
+            inset: 12px;
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .cert-border-inner {
+            position: absolute;
+            inset: 18px;
+            border: 1.5px dashed #a5b4fc;
+            border-radius: 4px;
+            pointer-events: none;
+        }
+
+        /* Corner decorations */
+        .corner { position: absolute; font-size: 28px; opacity: 0.6; }
+        .corner-tl { top: 24px; left: 28px; }
+        .corner-tr { top: 24px; right: 28px; }
+        .corner-bl { bottom: 24px; left: 28px; }
+        .corner-br { bottom: 24px; right: 28px; }
+
+        /* Header stripe */
+        .header-stripe {
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 72px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* Content */
+        .cert-content {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 30px 48px 30px;
+            gap: 0;
+        }
+
+        /* Logo/brand */
+        .brand {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 4px;
+            color: #667eea;
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        /* Trophy */
+        .trophy { font-size: 48px; margin-bottom: 2px; }
+
+        /* Title */
+        .cert-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 44px;
+            font-weight: 900;
+            color: #1E1B4B;
+            line-height: 1;
+            margin-bottom: 4px;
+        }
+        .cert-subtitle {
+            font-size: 14px;
+            font-weight: 700;
+            color: #6B7280;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        /* Divider */
+        .divider {
+            width: 120px;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 2px;
+            margin-bottom: 8px;
+        }
+
+        /* Certify text */
+        .certify-text {
+            font-size: 12px;
+            color: #9CA3AF;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        /* Child name */
+        .child-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 900;
+            color: #667eea;
+            margin-bottom: 6px;
+            text-align: center;
+            word-break: break-word;
+            max-width: 100%;
+        }
+
+        /* Achievement line */
+        .achievement {
+            font-size: 13px;
+            color: #374151;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        /* Score display */
+        .score-display {
+            font-size: 56px;
+            font-weight: 900;
+            color: #667eea;
+            line-height: 1;
+            margin-bottom: 2px;
+        }
+        .score-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #9CA3AF;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 4px;
+        }
+
+        /* Grade badge */
+        .grade-badge {
+            display: inline-block;
+            padding: 6px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 900;
+            margin-bottom: 0;
+        }
+        .grade-badge.pass {
+            background: linear-gradient(135deg, #059669, #34D399);
+            color: white;
+        }
+        .grade-badge.gold {
+            background: linear-gradient(135deg, #D97706, #FBBF24);
+            color: white;
+        }
+
+        /* Date */
+        .cert-date {
+            font-size: 16px;
+            color: #1E1B4B;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: 0.3px;
+        }
+
+        /* Footer */
+        .cert-footer {
+            position: absolute;
+            bottom: 20px;
+            left: 0; right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 48px;
+        }
+        .footer-left, .footer-right {
+            text-align: center;
+            min-width: 140px;
+        }
+        .footer-line {
+            width: 100%;
+            height: 1px;
+            background: #374151;
+            margin-bottom: 3px;
+        }
+        .footer-label {
+            font-size: 10px;
+            color: #9CA3AF;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .teacher-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 15px;
+            font-weight: 700;
+            color: #1E1B4B;
+            margin-bottom: 2px;
+            letter-spacing: 0.5px;
+        }
+
+        /* Stars decoration */
+        .star { position: absolute; font-size: 16px; opacity: 0.4; }
+        .star-1 { top: 78px; left: 55px; }
+        .star-2 { top: 85px; right: 58px; }
+        .star-3 { bottom: 72px; left: 65px; }
+        .star-4 { bottom: 78px; right: 55px; }
+
+        /* Medal ribbon for score */
+        .ribbon {
+            position: absolute;
+            top: 72px;
+            right: 36px;
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 16px rgba(102,126,234,0.4);
+        }
+
+        /* Print button */
+        .print-btn {
+            position: fixed;
+            bottom: 32px;
+            right: 32px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 8px 32px rgba(102,126,234,0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: transform 0.2s;
+            z-index: 100;
+        }
+        .print-btn:hover { transform: translateY(-3px); }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .print-btn { display: none !important; }
+            .cert-wrapper { box-shadow: none; width: 100%; height: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="cert-wrapper">
+        <!-- Decorative border -->
+        <div class="cert-border"></div>
+        <div class="cert-border-inner"></div>
+
+        <!-- Header stripe -->
+        <div class="header-stripe"></div>
+
+        <!-- Corner decorations -->
+        <div class="corner corner-tl">✦</div>
+        <div class="corner corner-tr">✦</div>
+        <div class="corner corner-bl">✦</div>
+        <div class="corner corner-br">✦</div>
+
+        <!-- Stars -->
+        <div class="star star-1">⭐</div>
+        <div class="star star-2">⭐</div>
+        <div class="star star-3">⭐</div>
+        <div class="star star-4">⭐</div>
+
+        <!-- Medal -->
+        {% if exam and exam.percentage >= 80 %}
+        <div class="ribbon">🏆</div>
+        {% endif %}
+
+        <!-- Content -->
+        <div class="cert-content">
+            <div class="brand">MathQuest</div>
+            <div class="trophy">🏆</div>
+            <div class="cert-title">Certificate</div>
+            <div class="cert-subtitle">of Achievement</div>
+            <div class="divider"></div>
+
+            <div class="cert-date" style="font-size: 18px; font-weight: 800; color: #1E1B4B; margin-bottom: 16px;">
+                {{ exam.taken_at.strftime('%d %B %Y') if exam and exam.taken_at else '12 April 2026' }}
+            </div>
+
+            <div class="certify-text">This certifies that</div>
+            <div class="child-name">{{ child_name }}</div>
+
+            <div class="achievement">
+                has successfully completed all four operations:<br>
+                ✨ Times Tables &nbsp;➗ Division &nbsp;➕ Addition &nbsp;➖ Subtraction
+            </div>
+
+            <div class="score-display">{{ exam.percentage if exam else 100 }}%</div>
+            <div class="score-label">Overall Score</div>
+            <div class="grade-badge {% if exam and exam.percentage >= 90 %}gold{% else %}pass{% endif %}">
+                {% if not exam or exam.percentage >= 90 %}⭐ GOLD PASS ⭐{% elif exam.percentage >= 80 %}✅ PASSED{% else %}✅ COMPLETED{% endif %}
+            </div>
+
+        </div>
+
+        <!-- Footer -->
+        <div class="cert-footer">
+            <div class="footer-left">
+                <div class="footer-line"></div>
+                <div class="footer-label">Parent Signature</div>
+            </div>
+            <div class="footer-right" style="text-align: right;">
+                <div class="teacher-name">Ms. Thompson</div>
+                <div class="footer-line"></div>
+                <div class="footer-label">Class Teacher</div>
+            </div>
+        </div>
+    </div>
+
+    <button class="print-btn" onclick="window.print()">
+        🖨️ Print Certificate
+    </button>
+</body>
+</html>

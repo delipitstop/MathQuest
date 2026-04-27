@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Exam - MathQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        .student-nav {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(12px);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(167,139,250,0.3);
+        }
+        .student-nav-logo { font-size: 26px; font-weight: 900; color: white; text-decoration: none; }
+        .back-btn { background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 40px; font-weight: 700; text-decoration: none; font-size: 14px; border: 1px solid rgba(255,255,255,0.2); }
+
+        .container { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+
+        .exam-header { text-align: center; margin-bottom: 32px; }
+        .exam-header h1 { font-size: 38px; font-weight: 900; text-shadow: 0 0 30px rgba(167,139,250,0.6); margin-bottom: 8px; }
+        .exam-header p { font-size: 17px; opacity: 0.85; margin-bottom: 12px; }
+        .exam-badge { display: inline-block; background: rgba(167,139,250,0.2); border: 2px solid #A78BFA; padding: 8px 24px; border-radius: 50px; font-size: 14px; font-weight: 700; color: #A78BFA; }
+
+        .progress-bar-exam { background: rgba(255,255,255,0.1); border-radius: 50px; height: 12px; margin-bottom: 8px; overflow: hidden; }
+        .progress-fill-exam { height: 100%; background: linear-gradient(90deg, #A78BFA, #F472B6); border-radius: 50px; transition: width 0.4s ease; }
+        .progress-text-exam { font-size: 14px; font-weight: 700; color: rgba(255,255,255,0.7); text-align: center; margin-bottom: 28px; }
+
+        .questions-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 16px; }
+        @media (max-width: 600px) { .questions-grid { grid-template-columns: 1fr; } }
+
+        .q-card {
+            background: rgba(255,255,255,0.07);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px;
+            padding: 20px;
+            transition: all 0.2s;
+        }
+        .q-card.answered { border-color: rgba(52,211,153,0.5); background: rgba(52,211,153,0.08); }
+        .q-card.wrong-preview { border-color: rgba(248,113,113,0.5); }
+
+        .q-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .q-num { font-size: 13px; font-weight: 800; color: rgba(255,255,255,0.5); }
+        .q-topic { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 20px; }
+        .q-topic.mult { background: rgba(139,92,246,0.3); color: #C4B5FD; }
+        .q-topic.div { background: rgba(20,184,166,0.3); color: #5EEAD4; }
+        .q-topic.add { background: rgba(245,158,11,0.3); color: #FCD34D; }
+        .q-topic.sub { background: rgba(220,38,38,0.3); color: #FCA5A5; }
+
+        .q-text { font-size: 18px; font-weight: 700; color: white; line-height: 1.4; margin-bottom: 14px; }
+        .q-input { width: 100%; padding: 12px 16px; border-radius: 12px; border: 2px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.08); color: white; font-size: 20px; font-weight: 800; font-family: 'Nunito', sans-serif; text-align: center; outline: none; transition: border-color 0.2s; }
+        .q-input:focus { border-color: #A78BFA; }
+        .q-input::placeholder { color: rgba(255,255,255,0.3); }
+        .q-input.correct-input { border-color: #34D399; }
+        .q-input.wrong-input { border-color: #F87171; }
+
+        .exam-footer { text-align: center; margin-top: 32px; padding: 24px; }
+        .btn-submit-exam {
+            background: linear-gradient(135deg, #34D399, #059669);
+            color: white;
+            padding: 18px 60px;
+            border-radius: 50px;
+            font-size: 22px;
+            font-weight: 900;
+            border: none;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+            box-shadow: 0 8px 32px rgba(52,211,153,0.4);
+            transition: all 0.3s;
+        }
+        .btn-submit-exam:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(52,211,153,0.5); }
+        .btn-submit-exam:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        .rules-box {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+            margin-bottom: 24px;
+            font-size: 14px;
+            color: rgba(255,255,255,0.7);
+            text-align: center;
+        }
+        .rules-box strong { color: #FCD34D; }
+
+        /* Tutor Bot - Exam Mode (Moral Support Only) */
+        .tutor-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C3AED, #A78BFA);
+            border: none;
+            cursor: pointer;
+            font-size: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 32px rgba(124,58,237,0.4);
+            z-index: 100;
+            transition: transform 0.2s;
+        }
+        .tutor-fab:hover { transform: scale(1.1); }
+
+        .tutor-modal {
+            display: none;
+            position: fixed;
+            bottom: 110px;
+            right: 24px;
+            width: 340px;
+            background: rgba(15,15,40,0.98);
+            border: 1px solid rgba(167,139,250,0.3);
+            border-radius: 24px;
+            padding: 20px;
+            z-index: 99;
+            box-shadow: 0 16px 64px rgba(0,0,0,0.5);
+        }
+        .tutor-modal.open { display: block; }
+        .tutor-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .tutor-header h3 { font-size: 16px; font-weight: 800; color: #A78BFA; }
+        .tutor-close { background: none; border: none; color: rgba(255,255,255,0.5); font-size: 20px; cursor: pointer; }
+        .tutor-msg { background: rgba(167,139,250,0.1); border-radius: 12px; padding: 12px; margin-bottom: 10px; font-size: 14px; color: rgba(255,255,255,0.9); line-height: 1.5; }
+        .tutor-note { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); border-radius: 12px; padding: 10px; margin-top: 10px; font-size: 12px; color: #FCD34D; text-align: center; }
+
+        .tutor-input-row { display: flex; gap: 8px; }
+        .tutor-input { flex: 1; padding: 8px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: rgba(255,255,255,0.08); color: white; font-size: 13px; font-family: 'Nunito', sans-serif; outline: none; }
+        .tutor-send { background: #7C3AED; color: white; border: none; padding: 8px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 700; font-family: 'Nunito', sans-serif; }
+
+        @media (max-width: 600px) {
+            .exam-header h1 { font-size: 28px; }
+            .questions-grid { grid-template-columns: 1fr; }
+            .tutor-modal { width: calc(100vw - 32px); right: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="student-nav">
+        <a href="/student/dashboard" class="student-nav-logo">MathQuest</a>
+        <a href="/student/dashboard" class="back-btn">Exit Exam</a>
+    </div>
+
+    <form method="POST" action="/exam/submit" id="examForm">
+    <div class="container">
+        <div class="exam-header">
+            <h1>🏆 Final MathQuest Exam</h1>
+            <p>Answer all 35 questions. You need 80% to pass. Take your time!</p>
+            <div class="exam-badge">📝 35 Questions &nbsp;|&nbsp; 🎯 80% to Pass &nbsp;|&nbsp; Mix of All 4 Operations</div>
+        </div>
+
+        <div class="rules-box">
+            <strong>📋 Exam Rules:</strong> Answer each question by typing your number answer. You can navigate between questions using your mouse or Tab key. Your tutor is here for <strong>moral support only</strong> — they won't give you the answer!
+        </div>
+
+        <div class="progress-bar-exam">
+            <div class="progress-fill-exam" id="progFill" style="width:0%"></div>
+        </div>
+        <div class="progress-text-exam" id="progText">0 of 35 answered</div>
+
+        <div class="questions-grid" id="questionsGrid">
+            {% for q in questions %}
+            <div class="q-card" id="card{{ q.id }}" data-id="{{ q.id }}">
+                <div class="q-meta">
+                    <span class="q-num">Q{{ q.id }}</span>
+                    <span class="q-topic {{ q.topic }}">{% if q.topic == 'multiplication' %}✖️ Times{% elif q.topic == 'division' %}➗ Division{% elif q.topic == 'addition' %}➕ Addition{% else %}➖ Subtraction{% endif %}</span>
+                </div>
+                <div class="q-text">{{ q.text }}</div>
+                <input type="text" class="q-input" id="q{{ q.id }}" name="q{{ q.id }}" placeholder="?" autocomplete="off" oninput="markAnswered({{ q.id }})">
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="exam-footer">
+            <button type="submit" class="btn-submit-exam" id="submitBtn" onclick="return confirm('Are you ready to submit your exam? You cannot change your answers after submitting.')">Submit Exam 🎯</button>
+        </div>
+    </div>
+    </form>
+
+    <!-- Tutor Bot FAB -->
+    <button class="tutor-fab" onclick="toggleTutor()" title="Tutor Bot - Moral Support Only">🤖</button>
+
+    <div class="tutor-modal" id="tutorModal">
+        <div class="tutor-header">
+            <h3>🤖 Tutor Bot</h3>
+            <button class="tutor-close" onclick="toggleTutor()">✕</button>
+        </div>
+        <div class="tutor-msg" id="tutorWelcome">
+            Hi there! I'm here to cheer you on! 💪 Remember, you need 80% to pass. Take your time with each question and read them carefully. You've got this! I can't give you answers, but I can give you confidence!
+        </div>
+        <div class="tutor-note">⚠️ I can only give hints and encouragement — no answers during the exam!</div>
+        <div class="tutor-input-row">
+            <input type="text" class="tutor-input" id="tutorInput" placeholder="Say something..." onkeydown="if(event.key==='Enter')sendTutor()">
+            <button class="tutor-send" onclick="sendTutor()">Send</button>
+        </div>
+    </div>
+
+<script>
+var TOTAL = {{ questions|length }};
+var answered = new Set();
+
+function markAnswered(id) {
+    var inp = document.getElementById('q' + id);
+    var card = document.getElementById('card' + id);
+    if (inp.value.trim() !== '') {
+        answered.add(id);
+        card.classList.add('answered');
+    } else {
+        answered.delete(id);
+        card.classList.remove('answered');
+    }
+    updateProgress();
+}
+
+function updateProgress() {
+    var pct = (answered.size / TOTAL) * 100;
+    document.getElementById('progFill').style.width = pct + '%';
+    document.getElementById('progText').textContent = answered.size + ' of ' + TOTAL + ' answered';
+}
+
+function toggleTutor() {
+    document.getElementById('tutorModal').classList.toggle('open');
+    if (document.getElementById('tutorModal').classList.contains('open')) {
+        document.getElementById('tutorInput').focus();
+    }
+}
+
+var moralSupportReplies = [
+    \"You've got this! Believe in yourself! 💪\",
+    \"Take a deep breath. You know this! 🌟\",
+    \"Read each question slowly. You've learned everything you need! 📚\",
+    \"Don't rush! Your brain works best when you're calm. 🧠\",
+    \"Every question you answer is one step closer to your certificate! 🏆\",
+    \"Remember: if you practiced your tables, you CAN do this! 🔥\",
+    \"A few wrong answers won't stop you. Keep going! 💫\",
+    \"You're smarter than you think! Trust yourself! ⭐\",
+    \"Pause, think, and then type your answer. You've got this! 💪\",
+    \"Each table you learned is already inside your brain. Just recall it! 🧠\",
+    \"Don't worry if you don't know one — just move to the next one! 🌟\",
+    \"This is your moment to show everything you've learned! 🚀\",
+    \"Think of it like a game. You've played it before and you've always won! 🎮\",
+    \"Your hard work is going to pay off right now! Keep going! 🏅\",
+    \"If a question looks tricky, read it again. You might find the answer! 👀\",
+    \"Mistakes are proof that you're trying! Keep going! 💪\",
+    \"You're doing brilliantly! Stay focused! 🌟\",
+    \"One question at a time. You can do this! 💫\",
+];
+
+var topicEncouragements = {
+    'multiplication': \"For multiplication, try making groups or counting in steps! Think of the number you're multiplying and count it forward! 💪\",
+    'division': \"For division, think: how many of the divisor fit into the number? You can use multiplication to help you! Try working backwards! ➗\",
+    'addition': \"For addition, start from the bigger number and count forward by the smaller one! You've got this! ➕\",
+    'subtraction': \"For subtraction, try counting backwards from the bigger number! Or think: what do I add to the smaller number to get the bigger one? ➖\"
+};
+
+function sendTutor() {
+    var input = document.getElementById('tutorInput');
+    var msg = input.value.trim();
+    if (!msg) return;
+    input.value = '';
+
+    var replies = moralSupportReplies.slice();
+    if (Math.random() < 0.4) {
+        var topics = Object.values(topicEncouragements);
+        replies = replies.concat(topics);
+    }
+
+    var reply = replies[Math.floor(Math.random() * replies.length)];
+    var wel = document.getElementById('tutorWelcome');
+    wel.textContent = reply;
+    wel.style.display = 'block';
+}
+
+// Prevent accidental navigation
+window.addEventListener('beforeunload', function(e) {
+    if (answered.size > 0 && answered.size < TOTAL) {
+        e.preventDefault();
+        e.returnValue = '';
+    }
+});
+</script>
+</body>
+</html>

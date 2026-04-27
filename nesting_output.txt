@@ -1,0 +1,102 @@
+Line 391 depth=1 OPEN: {% if children|length > 1 %}
+Line 393 depth=2 OPEN: {% for child in children %}
+Line 398 depth=2 CLOSE: {% endfor %}
+Line 400 depth=1 CLOSE: {% endif %}
+Line 403 depth=1 OPEN: {% for child in children %}
+Line 435 depth=2 OPEN: {% if child.exam_result %}{{ child.exam_result.percentage }}
+Line 456 depth=3 OPEN: {% if child.mult_passed == 15 %}🎉 All tables mastered!{% eli
+Line 472 depth=4 OPEN: {% if child.div_passed == 15 %}🎉 All tables mastered!{% elif
+Line 488 depth=5 OPEN: {% if child.add_passed == 15 %}🎉 All tables mastered!{% elif
+Line 504 depth=6 OPEN: {% if child.sub_passed == 15 %}🎉 All tables mastered!{% elif
+Line 512 depth=7 OPEN: {% if child.struggles %}
+Line 514 depth=8 OPEN: {% for s in child.struggles %}
+Line 518 depth=8 CLOSE: {% endfor %}
+Line 525 depth=7 CLOSE: {% endif %}
+Line 531 depth=7 OPEN: {% if not cert_unlocked %}
+Line 559 depth=7 CLOSE: {% endif %}
+Line 563 depth=7 OPEN: {% if cert_unlocked %}
+Line 568 depth=7 CLOSE: {% endif %}
+Line 608 depth=7 OPEN: {% if loop.last and children|length > 1 %}</div>{% endif %}
+Line 610 depth=7 CLOSE: {% endfor %}
+Line 613 depth=7 OPEN: {% if children|length > 1 and children[0].exam_passed %}
+Line 616 depth=7: '<div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, '
+Line 617 depth=8 OPEN: {% for child in children %}
+Line 618 depth=8: '<div style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:16p'
+Line 619 depth=8: '<div style="font-size:40px;margin-bottom:8px">{{ child.avatar }}</div>'
+Line 620 depth=8: '<div style="font-weight:800;font-size:18px">{{ child.name }}</div>'
+Line 621 depth=9 OPEN: {% if child.exam_passed %}
+Line 622 depth=9: '<div style="color:#FBBF24;font-weight:900;margin-top:4px">{{ child.exam_result.p'
+Line 623 depth=9: '<a href="/certificate/{{ child.id }}" class="btn-cert btn-cert-print" style="mar'
+Line 624 depth=9: '{% else %}'
+Line 625 depth=9: '<div style="font-size:13px;opacity:0.7;margin-top:4px">🔒 Not yet passed</div>'
+Line 626 depth=9 CLOSE: {% endif %}
+Line 627 depth=8: '</div>'
+Line 628 depth=8 CLOSE: {% endfor %}
+Line 629 depth=7: '</div>'
+Line 630 depth=7: '</div>'
+Line 631 depth=7 CLOSE: {% endif %}
+Line 632 depth=6: '</div>'
+Line 633 depth=6: ''
+Line 634 depth=6: ''
+Line 635 depth=6: ''
+Line 636 depth=6: ''
+Line 637 depth=6: ''
+Line 638 depth=6: '<!-- ========== FLOATING EINSTEIN BOT ========== -->'
+Line 639 depth=6: '<div class="ein-launcher" id="einLauncher" onclick="toggleEinFloat()">'
+Line 640 depth=6: 'A'
+Line 641 depth=6: '<div class="ein-badge" id="einBadge">!</div>'
+Line 642 depth=6: '</div>'
+Line 643 depth=6: ''
+Line 644 depth=6: '<div class="ein-float" id="einFloat">'
+Line 645 depth=6: '<!-- Drag handle header -->'
+Line 646 depth=6: '<div class="ein-float-hdr" id="einDragHandle">'
+Line 647 depth=6: '<div class="ein-hdr-ava">A</div>'
+Line 648 depth=6: '<div class="ein-hdr-info">'
+Line 649 depth=6: '<div class="ein-hdr-name">Albert Einstein</div>'
+Line 650 depth=6: '<div class="ein-hdr-tag">Maths Advisor - Click and drag to move</div>'
+Line 651 depth=6: '</div>'
+Line 652 depth=6: '<div class="ein-hdr-actions">'
+Line 653 depth=6: '<button class="hdr-btn" id="einFloatMute" onclick="toggleEinMute()" title="Mute"'
+Line 654 depth=6: '<button class="hdr-btn" onclick="toggleEinFloat()" title="Close">&#10005;</butto'
+Line 655 depth=6: '</div>'
+Line 656 depth=6: '</div>'
+Line 657 depth=6: ''
+Line 658 depth=6: '<!-- Messages -->'
+Line 659 depth=6: '<div class="ein-float-msgs" id="einMsgs">'
+Line 660 depth=6: '<div class="ein-msg" id="einWelcome">'
+Line 661 depth=6: '&#128579; Hello! I am Albert Einstein, your Maths Advisor!'
+Line 662 depth=6: '<span class="msg-time">Just now</span>'
+Line 663 depth=6: '</div>'
+Line 664 depth=6: '<div class="ein-msg" id="einPrompt">'
+Line 665 depth=6: 'Select a child below and click <strong>Get Advice</strong> to receive a personal'
+Line 666 depth=6: '<span class="msg-time">Just now</span>'
+Line 667 depth=6: '</div>'
+Line 668 depth=6: '</div>'
+Line 669 depth=6: ''
+Line 670 depth=6: '<!-- Body -->'
+Line 671 depth=6: '<div class="ein-float-body">'
+Line 672 depth=6: '<select class="ein-child-select" id="einChildSelect">'
+Line 673 depth=7 OPEN: {% for child in children %}
+Line 674 depth=7: '<option value="{{ child.id }}">{{ child.avatar }} {{ child.name }}</option>'
+Line 675 depth=7 CLOSE: {% endfor %}
+Line 676 depth=6: '</select>'
+Line 677 depth=6: '<div class="ein-actions">'
+Line 678 depth=6: '<button class="ein-get-btn" id="einGetBtn" onclick="einGetAdvice()">'
+Line 679 depth=6: '&#127919; Get Personalised Advice'
+Line 680 depth=6: '</button>'
+Line 681 depth=6: '<button class="ein-speak-btn" id="einSpeakBtn" onclick="einSpeakLast()" title="R'
+Line 682 depth=6: '&#128266;'
+Line 683 depth=6: '</button>'
+Line 684 depth=6: '</div>'
+Line 685 depth=6: '</div>'
+Line 686 depth=6: '</div>'
+Line 687 depth=6: ''
+Line 688 depth=6: ''
+Line 689 depth=6: '// ---- Floating window drag ----'
+Line 690 depth=6: 'var dragState = { isDragging: false, offsetX: 0, offsetY: 0, startX: 0, startY: '
+Line 691 depth=6: ''
+Line 692 depth=6: 'function initDrag() {'
+Line 693 depth=6: "dragState.floater = document.getElementById('einFloat');"
+Line 694 depth=6: "dragState.handle = document.getElementById('einDragHandle');"
+Line 695 depth=6: 'if (!dragState.handle) return;'
+Line 696 depth=6: ''

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Target Shoot - MathQuest{% endblock %}
+{% block extra_style %}
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0a0f1a;font-family:'Nunito',sans-serif;overflow:hidden;user-select:none}
+.game-wrap{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hud{display:flex;gap:28px;margin-bottom:12px;z-index:10}
+.hud-item{background:rgba(59,130,246,0.08);border:2px solid rgba(59,130,246,0.2);border-radius:16px;padding:8px 18px;text-align:center}
+.hud-label{font-size:10px;color:#60A5FA;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.hud-value{font-size:22px;font-weight:900;color:white;text-shadow:0 0 14px rgba(96,165,250,0.5)}
+#gameCanvas{border-radius:12px;border:2px solid rgba(59,130,246,0.2);box-shadow:0 0 50px rgba(59,130,246,0.15);background:radial-gradient(ellipse at center,#0a1628,#050a12);cursor:crosshair;display:block;margin:0 auto}
+.target{cursor:crosshair}
+.q-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:100;background:rgba(0,0,0,0.75);backdrop-filter:blur(6px)}
+.q-overlay.show{display:flex}
+.q-box{background:linear-gradient(135deg,#0a1a3e,#1e3a8a);border:3px solid #60A5FA;border-radius:24px;padding:36px 52px;text-align:center;box-shadow:0 0 50px rgba(96,165,250,0.4);max-width:90vw;animation:popIn 0.25s ease}
+@keyframes popIn{from{transform:scale(0.7)}to{transform:scale(1)}}
+.q-text{font-size:28px;font-weight:900;color:#fff;margin-bottom:20px;text-shadow:0 0 20px rgba(96,165,250,0.6)}
+.q-choices{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.q-choice{width:78px;height:78px;border-radius:50%;border:3px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:white;font-size:24px;font-weight:900;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.q-choice:hover{background:rgba(59,130,246,0.3);border-color:#60A5FA;transform:scale(1.1);box-shadow:0 0 24px rgba(96,165,250,0.5)}
+.q-choice.correct{background:rgba(52,211,153,0.35);border-color:#34D399;box-shadow:0 0 28px rgba(52,211,153,0.7)}
+.q-choice.wrong{background:rgba(239,68,68,0.3);border-color:#EF4444;animation:shake 0.3s ease}
+@keyframes shake{0%,100%{translateX(0)}25%{translateX(-6px)}75%{translateX(6px)}}
+.start-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;background:linear-gradient(135deg,#0a0f1a,#0f1f3a)}
+.start-screen.hidden{display:none}
+.start-title{font-size:56px;font-weight:900;color:#60A5FA;text-shadow:0 0 40px rgba(96,165,250,0.7);margin-bottom:8px}
+.start-sub{font-size:17px;color:#93c5fd;margin-bottom:36px;text-align:center;line-height:1.6}
+.start-btn{padding:16px 44px;background:linear-gradient(135deg,#2563EB,#3B82F6);color:white;border:none;border-radius:50px;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 6px 36px rgba(37,99,235,0.4);transition:all 0.2s}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 46px rgba(37,99,235,0.6)}
+.result-screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;background:linear-gradient(135deg,#0a0f1a,#0a1a3e)}
+.result-screen.show{display:flex}
+.result-title{font-size:44px;font-weight:900;color:#FBBF24;text-shadow:0 0 30px rgba(251,191,36,0.6);margin-bottom:14px}
+.result-score{font-size:64px;font-weight:900;color:#fff;margin-bottom:8px}
+.result-accuracy{font-size:22px;color:#60A5FA;margin-bottom:20px}
+.badge-earned{font-size:30px;margin-bottom:20px}
+.back-btn{margin-top:12px;padding:13px 36px;background:linear-gradient(135deg,#2563EB,#3B82F6);color:white;border:none;border-radius:50px;font-size:17px;font-weight:800;cursor:pointer;text-decoration:none}
+.instructions{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);border:1px solid rgba(59,130,246,0.15);border-radius:50px;padding:7px 20px;font-size:12px;color:#93c5fd;font-weight:700;z-index:10}
+</style>
+{% endblock %}
+{% block body %}
+<div class="game-wrap">
+    <div class="hud">
+        <div class="hud-item"><div class="hud-label">Score</div><div class="hud-value" id="scoreEl">0</div></div>
+        <div class="hud-item"><div class="hud-label">Streak</div><div class="hud-value" id="streakEl">0</div></div>
+        <div class="hud-item"><div class="hud-label">Level</div><div class="hud-value" id="levelEl">1</div></div>
+        <div class="hud-item"><div class="hud-label">Hits</div><div class="hud-value" id="hitsEl">0/0</div></div>
+    </div>
+    <canvas id="gameCanvas" width="720" height="480" class="target"></canvas>
+    <div class="instructions">Click the target with the correct answer!</div>
+</div>
+<div class="q-overlay" id="qOverlay">
+    <div class="q-box">
+        <div class="q-text" id="qText">12 + 7 = ?</div>
+        <div class="q-choices" id="qChoices"></div>
+    </div>
+</div>
+<div class="start-screen" id="startScreen">
+    <div class="start-title">Target Shoot</div>
+    <div class="start-sub">Click the CORRECT answer target!<br>Build your streak to level up!</div>
+    <button class="start-btn" id="startBtn">START GAME</button>
+</div>
+<div class="result-screen" id="resultScreen">
+    <div class="result-title">Time's Up!</div>
+    <div class="result-score" id="finalScore">0</div>
+    <div class="result-accuracy" id="finalAccuracy">Accuracy: 0%</div>
+    <div class="badge-earned" id="badgeEarned"></div>
+    <a href="/student/dashboard" class="back-btn">Back to Dashboard</a>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/target_shoot.js') }}"></script>
+{% endblock %}

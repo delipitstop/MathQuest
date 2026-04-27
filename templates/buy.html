@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}Get MathQuest — £5{% endblock %}
+{% block extra_style %}
+<style>
+body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.buy-wrap { max-width: 520px; margin: 0 auto; padding: 80px 20px 40px; }
+.buy-card { background: white; border-radius: 24px; padding: 36px; box-shadow: 0 20px 60px rgba(0,0,0,0.18); }
+.buy-icon { text-align: center; font-size: 60px; margin-bottom: 16px; }
+.buy-title { text-align: center; font-size: 26px; font-weight: 900; color: #1E1B4B; margin-bottom: 6px; }
+.buy-sub { text-align: center; color: #6B7280; font-size: 15px; margin-bottom: 28px; line-height: 1.5; }
+.price-box { background: #F5F3FF; border-radius: 16px; padding: 16px; text-align: center; margin-bottom: 24px; }
+.price { font-size: 44px; font-weight: 900; color: #7C3AED; }
+.price-label { font-size: 13px; color: #9CA3AF; font-weight: 700; }
+.form-group { margin-bottom: 16px; }
+.form-label { display: block; font-size: 13px; font-weight: 700; color: #374151; margin-bottom: 6px; }
+.form-input { width: 100%; padding: 14px 16px; border: 2px solid #E5E7EB; border-radius: 12px; font-size: 16px; font-family: 'Nunito', sans-serif; box-sizing: border-box; transition: border-color 0.2s; }
+.form-input:focus { outline: none; border-color: #7C3AED; }
+.btn-buy {
+    width: 100%; padding: 16px; border-radius: 14px; border: none;
+    background: linear-gradient(135deg,#FF5C5C,#FF2D55);
+    color: white; font-size: 17px; font-weight: 900; font-family: 'Nunito', sans-serif;
+    cursor: pointer; box-shadow: 0 6px 24px rgba(255,45,85,0.4);
+    transition: all 0.2s; margin-top: 8px;
+}
+.btn-buy:hover { transform: translateY(-2px); box-shadow: 0 10px 32px rgba(255,45,85,0.5); }
+.btn-buy:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
+.error-msg { background: #FEF2F2; border: 2px solid #FECACA; color: #DC2626; padding: 12px 16px; border-radius: 10px; font-size: 14px; font-weight: 700; margin-bottom: 16px; }
+.guarantee { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 13px; color: #9CA3AF; font-weight: 600; }
+.guarantee-icon { font-size: 20px; }
+.feature-list { margin-bottom: 20px; }
+.feature-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 14px; color: #374151; font-weight: 700; }
+.feature-item .check { color: #34D399; font-size: 18px; }
+</style>
+{% endblock %}
+{% block body %}
+<div class="buy-wrap">
+    <div class="buy-card">
+        <div class="buy-icon">🎮</div>
+        <h1 class="buy-title">MathQuest Home Access</h1>
+        <p class="buy-sub">Enter your email to complete your purchase. You'll receive your access code instantly.</p>
+        
+        <div class="price-box">
+            <div class="price">£5</div>
+            <div class="price-label">one-time payment · lifetime access · up to 4 children</div>
+        </div>
+        
+        <div class="feature-list">
+            <div class="feature-item"><span class="check">✅</span> Times tables, division, addition & subtraction</div>
+            <div class="feature-item"><span class="check">✅</span> 4 fun maths games</div>
+            <div class="feature-item"><span class="check">✅</span> Built-in AI Einstein tutor</div>
+            <div class="feature-item"><span class="check">✅</span> Progress tracking & certificates</div>
+            <div class="feature-item"><span class="check">✅</span> Up to 4 children per account</div>
+            <div class="feature-item"><span class="check">✅</span> No subscription — ever</div>
+        </div>
+        
+        {% if error %}
+        <div class="error-msg">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST" action="/buy" id="buy-form">
+            <div class="form-group">
+                <label class="form-label">Your Email Address</label>
+                <input type="email" name="email" class="form-input" 
+                       placeholder="you@example.com" required
+                       id="email-input"
+                       value="{{ email or '' }}">
+            </div>
+            
+            <button type="submit" class="btn-buy" id="buy-btn">
+                🛒 Pay £5 Securely with Stripe →
+            </button>
+        </form>
+        
+        <div class="guarantee">
+            <span class="guarantee-icon">🔒</span>
+            Secure payment via Stripe · Your access code arrives by email within seconds
+        </div>
+    </div>
+    
+    <p style="text-align:center;margin-top:20px;font-size:14px;color:rgba(255,255,255,0.8)">
+        Already have an account? <a href="/parent/login" style="color:white;font-weight:700">Log in here</a>
+    </p>
+</div>
+
+<script>
+document.getElementById('buy-form').addEventListener('submit', function() {
+    var btn = document.getElementById('buy-btn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Redirecting to Stripe...';
+});
+</script>
+{% endblock %}

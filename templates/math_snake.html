@@ -1,0 +1,220 @@
+{% extends "base.html" %}
+{% block title %}Math Snake - MathQuest{% endblock %}
+{% block extra_style %}
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#050a05;font-family:'Nunito',sans-serif;overflow:hidden;user-select:none}
+.game-wrap{position:relative;width:100vw;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hud{display:flex;gap:32px;margin-bottom:14px;z-index:10}
+.hud-item{background:rgba(52,211,153,0.08);border:2px solid rgba(52,211,153,0.2);border-radius:16px;padding:8px 20px;text-align:center}
+.hud-label{font-size:10px;color:#34D399;font-weight:800;text-transform:uppercase;letter-spacing:1px}
+.hud-value{font-size:24px;font-weight:900;color:white;text-shadow:0 0 16px rgba(52,211,153,0.5)}
+#gameCanvas{border-radius:12px;border:2px solid rgba(52,211,153,0.25);box-shadow:0 0 50px rgba(52,211,153,0.15);background:#0a1a0a}
+.q-overlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:100;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px)}
+.q-overlay.show{display:flex}
+.q-box{background:linear-gradient(135deg,#052016,#064d28);border:3px solid #34D399;border-radius:24px;padding:36px 52px;text-align:center;box-shadow:0 0 50px rgba(52,211,153,0.4);max-width:90vw;animation:popIn 0.25s ease}
+@keyframes popIn{from{transform:scale(0.7)}to{transform:scale(1)}}
+.q-emoji{font-size:44px;margin-bottom:10px}
+.q-text{font-size:24px;font-weight:900;color:#fff;margin-bottom:20px;text-shadow:0 0 16px rgba(52,211,153,0.5)}
+.q-choices{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.q-choice{width:78px;height:78px;border-radius:14px;border:3px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:white;font-size:24px;font-weight:900;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.q-choice:hover{background:rgba(52,211,153,0.25);border-color:#34D399;transform:scale(1.08)}
+.q-choice.correct{background:rgba(52,211,153,0.35);border-color:#34D399;box-shadow:0 0 24px rgba(52,211,153,0.6)}
+.q-choice.wrong{background:rgba(239,68,68,0.3);border-color:#EF4444;animation:shake 0.3s ease}
+@keyframes shake{0%,100%{translateX(0)}25%{translateX(-6px)}75%{translateX(6px)}}
+.start-screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;background:linear-gradient(135deg,#050a05,#0a1a0a)}
+.start-screen.hidden{display:none}
+.start-title{font-size:58px;font-weight:900;color:#34D399;text-shadow:0 0 40px rgba(52,211,153,0.7);margin-bottom:8px}
+.start-sub{font-size:17px;color:#4ade80;margin-bottom:36px;text-align:center}
+.start-btn{padding:16px 44px;background:linear-gradient(135deg,#059669,#34D399);color:white;border:none;border-radius:50px;font-size:19px;font-weight:900;cursor:pointer;box-shadow:0 6px 36px rgba(52,211,153,0.4);transition:all 0.2s}
+.start-btn:hover{transform:translateY(-2px);box-shadow:0 10px 46px rgba(52,211,153,0.6)}
+.result-screen{position:fixed;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:200;background:linear-gradient(135deg,#050a05,#052016)}
+.result-screen.show{display:flex}
+.result-title{font-size:44px;font-weight:900;color:#FBBF24;text-shadow:0 0 30px rgba(251,191,36,0.6);margin-bottom:14px}
+.result-score{font-size:64px;font-weight:900;color:#fff;margin-bottom:8px}
+.result-accuracy{font-size:22px;color:#34D399;margin-bottom:20px}
+.badge-earned{font-size:30px;margin-bottom:20px}
+.back-btn{margin-top:12px;padding:13px 36px;background:linear-gradient(135deg,#059669,#34D399);color:white;border:none;border-radius:50px;font-size:17px;font-weight:800;cursor:pointer;text-decoration:none}
+.instructions{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.5);border:1px solid rgba(52,211,153,0.15);border-radius:50px;padding:7px 20px;font-size:12px;color:#4ade80;font-weight:700;z-index:10;white-space:nowrap}
+</style>
+{% endblock %}
+{% block body %}
+<div class="game-wrap">
+    <div class="hud">
+        <div class="hud-item"><div class="hud-label">Score</div><div class="hud-value" id="scoreEl">0</div></div>
+        <div class="hud-item"><div class="hud-label">Length</div><div class="hud-value" id="lengthEl">3</div></div>
+        <div class="hud-item"><div class="hud-label">Level</div><div class="hud-value" id="levelEl">1</div></div>
+        <div class="hud-item"><div class="hud-label">Best</div><div class="hud-value" id="bestEl">0</div></div>
+    </div>
+    <canvas id="gameCanvas" width="620" height="460"></canvas>
+    <div class="instructions">Use Arrow Keys or WASD to move</div>
+</div>
+<div class="q-overlay" id="qOverlay">
+    <div class="q-box">
+        <div class="q-emoji">🍎</div>
+        <div class="q-text" id="qText">24 / 3 = ?</div>
+        <div class="q-choices" id="qChoices"></div>
+    </div>
+</div>
+<div class="start-screen" id="startScreen">
+    <div class="start-title">Math Snake</div>
+    <div class="start-sub">Eat the CORRECT answer to grow longer!<br>Wrong answers = Game Over!</div>
+    <button class="start-btn" onclick="startGame()">START GAME</button>
+</div>
+<div class="result-screen" id="resultScreen">
+    <div class="result-title">Game Over!</div>
+    <div class="result-score" id="finalScore">0</div>
+    <div class="result-accuracy" id="finalAccuracy">Accuracy: 0%</div>
+    <div class="badge-earned" id="badgeEarned"></div>
+    <a href="/student/dashboard" class="back-btn">Back to Dashboard</a>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+var canvas, ctx, W=620, H=460, CELL=20, COLS=Math.floor(W/CELL), ROWS=Math.floor(H/CELL);
+var snake, food, direction, nextDir, score, level, gameActive, animId;
+var currentFood={value:0,choices:[],x:0,y:0};
+var totalAnswered=0, correctCount=0;
+var speed=150;
+
+function generateFood(){
+    var allVals=[];
+    for(var i=1;i<=12;i++)for(var j=1;j<=12;j++)allVals.push(i*j);
+    var dividend=Math.floor(Math.random()*12)+1;
+    var divisor=Math.floor(Math.random()*12)+1;
+    var actualQ = Math.max(dividend, divisor);
+    var actualD = Math.min(dividend, divisor);
+    var correct=Math.floor(actualQ/actualD);
+    var choices=[correct];
+    while(choices.length<4){
+        var c=Math.floor(Math.random()*12)+1;
+        if(c!==correct&&!choices.includes(c))choices.push(c);
+    }
+    choices.sort(function(){return 0.5-Math.random();});
+    currentFood={value:correct,choices:choices,q:actualQ+' / '+actualD+' = ?'};
+    var fx=Math.floor(Math.random()*(COLS-2))+1;
+    var fy=Math.floor(Math.random()*(ROWS-2))+1;
+    currentFood.x=fx*CELL+CELL/2;
+    currentFood.y=fy*CELL+CELL/2;
+}
+
+function startGame(){
+    snake=[{x:Math.floor(COLS/2)*CELL,y:Math.floor(ROWS/2)*CELL}];
+    direction={x:1,y:0}; nextDir={x:1,y:0};
+    score=0; level=1; gameActive=true; totalAnswered=0; correctCount=0; speed=150;
+    generateFood();
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('resultScreen').classList.remove('show');
+    document.getElementById('bestEl').textContent=localStorage.getItem('mathsnake_best')||0;
+    updateHUD();
+    if(animId)cancelAnimationFrame(animId);
+    gameLoop();
+}
+
+function updateHUD(){
+    document.getElementById('scoreEl').textContent=score;
+    document.getElementById('lengthEl').textContent=snake.length;
+    document.getElementById('levelEl').textContent=level;
+}
+
+function showQuestion(){
+    gameActive=false;
+    var overlay=document.getElementById('qOverlay');
+    document.getElementById('qText').textContent=currentFood.q;
+    var choicesEl=document.getElementById('qChoices'); choicesEl.innerHTML='';
+    currentFood.choices.forEach(function(c){
+        var btn=document.createElement('button'); btn.className='q-choice'; btn.textContent=c;
+        btn.onclick=function(){checkFoodAnswer(c);};
+        choicesEl.appendChild(btn);
+    });
+    overlay.classList.add('show');
+}
+
+function checkFoodAnswer(chosen){
+    var overlay=document.getElementById('qOverlay');
+    var btns=document.querySelectorAll('.q-choice');
+    btns.forEach(function(b){b.style.pointerEvents='none';if(parseInt(b.textContent)===currentFood.value)b.classList.add('correct');});
+    setTimeout(function(){
+        overlay.classList.remove('show');
+        btns.forEach(function(b){b.classList.remove('correct','wrong');b.style.pointerEvents='auto';});
+        totalAnswered++;
+        if(chosen===currentFood.value){
+            correctCount++; score+=10*level;
+            var head={x:snake[0].x+direction.x*CELL,y:snake[0].y+direction.y*CELL};
+            snake.unshift(head);
+            if(snake.length%5===0&&level<5){level++;speed=Math.max(60,150-level*15);}
+            updateHUD(); generateFood();
+            if(animId)cancelAnimationFrame(animId);
+            gameActive=true; gameLoop();
+        }else{
+            btns.forEach(function(b){if(parseInt(b.textContent)===chosen)b.classList.add('wrong');});
+            setTimeout(function(){endGame();},500);
+        }
+    },500);
+}
+
+function endGame(){
+    gameActive=false; cancelAnimationFrame(animId);
+    var best=parseInt(localStorage.getItem('mathsnake_best')||0);
+    if(score>best){localStorage.setItem('mathsnake_best',score);}
+    var acc=totalAnswered>0?Math.round(correctCount/totalAnswered*100):0;
+    document.getElementById('finalScore').textContent=score+' pts';
+    document.getElementById('finalAccuracy').textContent='Accuracy: '+acc+'%';
+    var badge='';
+    if(score>=300)badge='🐍 Snake Master!';
+    else if(score>=150)badge='⭐ Division Pro!';
+    else if(score>=50)badge='🌟 Good Try!';
+    document.getElementById('badgeEarned').textContent=badge;
+    document.getElementById('resultScreen').classList.add('show');
+    fetch('/api/quiz/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({child_id:1,game:'mathsnake',score:score,accuracy:acc})}).catch(function(){});
+}
+
+function gameLoop(){
+    if(!gameActive)return;
+    direction=nextDir;
+    var head={x:snake[0].x+direction.x*CELL,y:snake[0].y+direction.y*CELL};
+    if(head.x<0||head.x>=W||head.y<0||head.y>=H){endGame();return;}
+    if(snake.some(function(s){return s.x===head.x&&s.y===head.y;})){endGame();return;}
+    snake.unshift(head);
+    var ate=Math.abs(head.x-currentFood.x)<CELL&&Math.abs(head.y-currentFood.y)<CELL;
+    if(ate){showQuestion();return;}
+    snake.pop();
+    ctx.clearRect(0,0,W,H);
+    // Grid
+    ctx.strokeStyle='rgba(52,211,153,0.06)'; ctx.lineWidth=1;
+    for(var x=0;x<=W;x+=CELL){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();}
+    for(var y=0;y<=H;y+=CELL){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+    // Food
+    ctx.save(); ctx.translate(currentFood.x,currentFood.y);
+    ctx.fillStyle='#EF4444'; ctx.shadowColor='#EF4444'; ctx.shadowBlur=20;
+    ctx.beginPath(); ctx.arc(0,0,CELL*0.7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='white'; ctx.shadowBlur=0; ctx.font='bold 14px Nunito'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(currentFood.value,0,1);
+    ctx.restore();
+    // Snake
+    snake.forEach(function(seg,i){
+        var alpha=1-i/snake.length*0.6;
+        ctx.fillStyle='rgba(52,211,153,'+alpha+')'; ctx.shadowColor='#34D399'; ctx.shadowBlur=i===0?16:0;
+        ctx.beginPath(); ctx.roundRect(seg.x+2,seg.y+2,CELL-4,CELL-4,6); ctx.fill();
+        ctx.shadowBlur=0;
+        if(i===0){
+            ctx.fillStyle='rgba(0,0,0,0.7)';
+            var ex=seg.x+CELL/2+direction.x*CELL*3;
+            var ey=seg.y+CELL/2+direction.y*CELL*3;
+            ctx.beginPath(); ctx.arc(ex-direction.x*3,ey-direction.y*3,3,0,Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(ex+direction.x*3,ey+direction.y*3,3,0,Math.PI*2); ctx.fill();
+        }
+    });
+    animId=setTimeout(function(){gameLoop();},speed);
+}
+
+document.addEventListener('keydown',function(e){
+    if(!gameActive&&!document.getElementById('qOverlay').classList.contains('show'))return;
+    if(e.key==='ArrowLeft'||e.key==='a'){if(direction.x!==1)nextDir={x:-1,y:0};}
+    if(e.key==='ArrowRight'||e.key==='d'){if(direction.x!==-1)nextDir={x:1,y:0};}
+    if(e.key==='ArrowUp'||e.key==='w'){if(direction.y!==1)nextDir={x:0,y:-1};}
+    if(e.key==='ArrowDown'||e.key==='s'){if(direction.y!==-1)nextDir={x:0,y:1};}
+});
+canvas=document.getElementById('gameCanvas'); ctx=canvas.getContext('2d');
+</script>
+{% endblock %}

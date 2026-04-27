@@ -1,0 +1,28 @@
+Line 391 depth=1 OPEN: {% if children|length > 1 %}
+Line 393 depth=2 OPEN: {% for child in children %}
+Line 398 depth=2 CLOSE: {% endfor %}
+Line 400 depth=1 CLOSE: {% endif %}
+Line 403 depth=1 OPEN: {% for child in children %}
+Line 435 depth=2 OPEN: {% if child.exam_result %}{{ child.exam_result.percentage }}
+Line 456 depth=3 OPEN: {% if child.mult_passed == 15 %}🎉 All tables mastered!{% eli
+Line 472 depth=4 OPEN: {% if child.div_passed == 15 %}🎉 All tables mastered!{% elif
+Line 488 depth=5 OPEN: {% if child.add_passed == 15 %}🎉 All tables mastered!{% elif
+Line 504 depth=6 OPEN: {% if child.sub_passed == 15 %}🎉 All tables mastered!{% elif
+Line 512 depth=7 OPEN: {% if child.struggles %}
+Line 514 depth=8 OPEN: {% for s in child.struggles %}
+Line 518 depth=8 CLOSE: {% endfor %}
+Line 525 depth=7 CLOSE: {% endif %}
+Line 531 depth=7 OPEN: {% if not cert_unlocked %}
+Line 559 depth=7 CLOSE: {% endif %}
+Line 563 depth=7 OPEN: {% if cert_unlocked %}
+Line 568 depth=7 CLOSE: {% endif %}
+Line 608 depth=7 OPEN: {% if loop.last and children|length > 1 %}</div>{% endif %}
+Line 610 depth=7 CLOSE: {% endfor %}
+Line 613 depth=7 OPEN: {% if children|length > 1 and children[0].exam_passed %}
+Line 617 depth=8 OPEN: {% for child in children %}
+Line 621 depth=9 OPEN: {% if child.exam_passed %}
+Line 626 depth=9 CLOSE: {% endif %}
+Line 628 depth=8 CLOSE: {% endfor %}
+Line 631 depth=7 CLOSE: {% endif %}
+Line 673 depth=7 OPEN: {% for child in children %}
+Line 675 depth=7 CLOSE: {% endfor %}

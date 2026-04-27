@@ -1,0 +1,251 @@
+
+
+// ---- Floating window drag ----
+var dragState = { isDragging: false, offsetX: 0, offsetY: 0, startX: 0, startY: 0, floater: null, handle: null };
+
+function initDrag() {
+    dragState.floater = document.getElementById('einFloat');
+    dragState.handle = document.getElementById('einDragHandle');
+    if (!dragState.handle) return;
+
+    dragState.handle.addEventListener('mousedown', function(e) {
+        if (e.target.closest('.hdr-btn')) return;
+        dragState.isDragging = true;
+        dragState.startX = e.clientX;
+        dragState.startY = e.clientY;
+        var rect = dragState.floater.getBoundingClientRect();
+        dragState.offsetX = e.clientX - rect.left;
+        dragState.offsetY = e.clientY - rect.top;
+        dragState.floater.style.transition = 'none';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+        if (!dragState.isDragging) return;
+        var maxX = window.innerWidth - dragState.floater.offsetWidth - 8;
+        var maxY = window.innerHeight - dragState.floater.offsetHeight - 8;
+        var newX = Math.max(8, Math.min(maxX, e.clientX - dragState.offsetX));
+        var newY = Math.max(8, Math.min(maxY, e.clientY - dragState.offsetY));
+        dragState.floater.style.left = newX + 'px';
+        dragState.floater.style.right = 'auto';
+        dragState.floater.style.bottom = 'auto';
+    });
+
+    document.addEventListener('mouseup', function() {
+        if (dragState.isDragging) {
+            dragState.isDragging = false;
+            dragState.floater.style.transition = '';
+        }
+    });
+
+    // Touch drag support
+    dragState.handle.addEventListener('touchstart', function(e) {
+        if (e.target.closest('.hdr-btn')) return;
+        var touch = e.touches[0];
+        dragState.isDragging = true;
+        var rect = dragState.floater.getBoundingClientRect();
+        dragState.offsetX = touch.clientX - rect.left;
+        dragState.offsetY = touch.clientY - rect.top;
+        dragState.floater.style.transition = 'none';
+    }, { passive: true });
+
+    document.addEventListener('touchmove', function(e) {
+        if (!dragState.isDragging) return;
+        var touch = e.touches[0];
+        var maxX = window.innerWidth - dragState.floater.offsetWidth - 8;
+        var maxY = window.innerHeight - dragState.floater.offsetHeight - 8;
+        var newX = Math.max(8, Math.min(maxX, touch.clientX - dragState.offsetX));
+        var newY = Math.max(8, Math.min(maxY, touch.clientY - dragState.offsetY));
+        dragState.floater.style.left = newX + 'px';
+        dragState.floater.style.right = 'auto';
+        dragState.floater.style.bottom = 'auto';
+    }, { passive: true });
+
+    document.addEventListener('touchend', function() {
+        if (dragState.isDragging) {
+            dragState.isDragging = false;
+            dragState.floater.style.transition = '';
+        }
+    });
+}
+
+// Init drag on load
+document.addEventListener('DOMContentLoaded', initDrag);
+
+// ---- Floating window toggle ----
+function toggleEinFloat() {
+    var floater = document.getElementById('einFloat');
+    var launcher = document.getElementById('einLauncher');
+    einFloatOpen = !einFloatOpen;
+    if (einFloatOpen) {
+        floater.classList.add('open');
+        launcher.classList.add('hidden-badge');
+        launcher.style.display = 'none';
+        // Mark existing messages as read
+        einNewMsg = false;
+        document.getElementById('einBadge').style.display = 'none';
+    } else {
+        floater.classList.remove('open');
+        launcher.style.display = 'flex';
+    }
+}
+
+// ---- Mute toggle ----
+function toggleEinMute() {
+    einMuted = !einMuted;
+    var muteBtn = document.getElementById('einFloatMute');
+    var speakBtn = document.getElementById('einSpeakBtn');
+    if (einMuted) {
+        if (einAudio) { einAudio.pause(); einAudio = null; }
+        einSpeaking = false;
+        muteBtn.textContent = '🔇';
+        muteBtn.title = 'Unmute';
+        speakBtn.classList.add('muted');
+    } else {
+        muteBtn.textContent = '🔊';
+        muteBtn.title = 'Mute';
+        speakBtn.classList.remove('muted');
+    }
+}
+
+// ---- TTS speak ----
+function einStopAudio() {
+    if (einAudio) { einAudio.pause(); einAudio = null; }
+    einSpeaking = false;
+    document.getElementById('einSpeakBtn')?.classList.remove('speaking');
+}
+
+function einStripHtml(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+}
+
+function einSpeak(text, cb) {
+    var raw = einStripHtml(text).trim();
+    if (!raw) { if (cb) cb(); return; }
+    einStopAudio();
+    if (einMuted) { if (cb) cb(); return; }
+    var speakBtn = document.getElementById('einSpeakBtn');
+    einSpeaking = true;
+    if (speakBtn) speakBtn.classList.add('speaking');
+    fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: raw, voice: 'en-GB-RyanNeural' })
+    }).then(function(res) {
+        if (!res || !res.ok) { if (cb) cb(); return; }
+        return res.blob();
+    }).then(function(blob) {
+        if (!blob || einMuted) { if (cb) cb(); return; }
+        var url = URL.createObjectURL(blob);
+        einAudio = new Audio(url);
+        einAudio.volume = 1.0;
+        einAudio.play().catch(function() { einSpeaking = false; });
+        einAudio.onended = einAudio.onerror = function() {
+            einSpeaking = false;
+            if (speakBtn) speakBtn.classList.remove('speaking');
+            URL.revokeObjectURL(url);
+            if (cb) cb();
+        };
+    }).catch(function() {
+        einSpeaking = false;
+        if (speakBtn) speakBtn.classList.remove('speaking');
+        if (cb) cb();
+    });
+}
+
+// Speak the last advice
+function einSpeakLast() {
+    if (!einLastText) return;
+    if (einSpeaking) {
+        einStopAudio();
+        return;
+    }
+    einSpeak(einLastText);
+}
+
+// ---- Add message to chat ----
+function einAddMsg(html, isUser) {
+    var msgs = document.getElementById('einMsgs');
+    var div = document.createElement('div');
+    div.className = 'ein-msg' + (isUser ? ' user' : '');
+    var time = document.createElement('span');
+    time.className = 'msg-time';
+    var now = new Date();
+    time.textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    div.innerHTML = html;
+    div.appendChild(time);
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+
+    // Show notification badge if float is closed
+    if (!einFloatOpen && !isUser) {
+        var launcher = document.getElementById('einLauncher');
+        var badge = document.getElementById('einBadge');
+        launcher.classList.remove('hidden-badge');
+        launcher.style.display = 'flex';
+        badge.style.display = 'flex';
+    }
+}
+
+// ---- Show typing dots ----
+function einShowTyping(show) {
+    var existing = document.getElementById('einTyping');
+    if (show && !existing) {
+        var div = document.createElement('div');
+        div.className = 'ein-typing';
+        div.id = 'einTyping';
+        div.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
+        document.getElementById('einMsgs').appendChild(div);
+        document.getElementById('einMsgs').scrollTop = document.getElementById('einMsgs').scrollHeight;
+    } else if (!show && existing) {
+        existing.remove();
+    }
+}
+
+// ---- Get advice from API ----
+function einGetAdvice() {
+    var childId = document.getElementById('einChildSelect').value;
+    var btn = document.getElementById('einGetBtn');
+
+    btn.disabled = true;
+    btn.textContent = '⏳ Thinking...';
+    einShowTyping(true);
+
+    fetch('/api/parent/advice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ child_id: parseInt(childId) })
+    }).then(function(r) { return r.json(); })
+    .then(function(data) {
+        einShowTyping(false);
+        btn.disabled = false;
+        btn.textContent = '🎯 Get Advice';
+
+        var advice = data.advice || 'Sorry, I could not generate advice right now. Please try again!';
+        einLastText = advice;
+        einAddMsg(advice, false);
+        einSpeak(advice);
+    })
+    .catch(function() {
+        einShowTyping(false);
+        btn.disabled = false;
+        btn.textContent = '🎯 Get Advice';
+        einAddMsg('⚠️ Something went wrong. Please check your connection and try again!', false);
+    });
+}
+
+// ---- Child selector ----
+function selectChild(childId, el) {
+    document.querySelectorAll('.child-chip').forEach(function(c) { c.classList.remove('selected'); });
+    el.classList.add('selected');
+    document.querySelectorAll('.dash-main').forEach(function(d) { d.classList.remove('active'); });
+    document.getElementById('dash-' + childId).classList.add('active');
+}
+
+// ---- Open float when clicking launcher if already has messages ----
+document.getElementById('einLauncher')?.addEventListener('dblclick', function() {
+    toggleEinFloat();
+});
+</script>
+{% endblock %}

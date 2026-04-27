@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% set op = operation|default('mult') %}
+    {% if op == 'div' %}<title>{{ table_num }} Division Table - MathQuest</title>
+    {% elif op == 'add' %}<title>{{ table_num }} Addition Table - MathQuest</title>
+    {% elif op == 'sub' %}<title>{{ table_num }} Subtraction Table - MathQuest</title>
+    {% else %}<title>{{ table_num }} Times Table - MathQuest</title>
+    {% endif %}
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        {% if op == 'div' %}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#0f766e 0%,#065f46 100%);min-height:100vh;color:white}
+        {% elif op == 'add' %}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#D97706 0%,#B45309 100%);min-height:100vh;color:white}
+        {% elif op == 'sub' %}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#BE123C 0%,#9B1C1C 100%);min-height:100vh;color:white}
+        {% else %}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);min-height:100vh;color:white}
+        {% endif %}
+        .student-nav{background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;border-radius:0 0 24px 24px}
+        .student-nav-logo{font-size:26px;font-weight:900;color:white;text-decoration:none}
+        .back-btn{background:rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:40px;font-weight:700;text-decoration:none;font-size:14px}
+        .container{max-width:800px;margin:0 auto;padding:28px 20px}
+        {% if division %}
+        body{font-family:'Nunito',sans-serif;background:linear-gradient(135deg,#0f766e 0%,#065f46 100%);min-height:100vh;color:white}
+        {% endif %}
+        .page-header{text-align:center;color:white;margin-bottom:28px}
+        .page-header h1{font-size:38px;font-weight:900;margin-bottom:6px;text-shadow:0 4px 16px rgba(0,0,0,0.2)}
+        .page-header p{font-size:17px;opacity:0.9}
+        .eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:14px;margin-bottom:28px}
+        .eq-card{background:white;border-radius:20px;padding:24px 12px;text-align:center;cursor:pointer;transition:all 0.25s cubic-bezier(0.34,1.56,0.64,1);text-decoration:none;display:block;box-shadow:0 6px 24px rgba(0,0,0,0.12);position:relative;overflow:hidden}
+        .eq-card:hover{transform:translateY(-6px) scale(1.06);box-shadow:0 16px 48px rgba(0,0,0,0.22)}
+        .eq-card:active{transform:scale(0.97)}
+        .eq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px}
+        .eq-card:nth-child(3n+1)::before{background:#A78BFA}
+        .eq-card:nth-child(3n+2)::before{background:#34D399}
+        .eq-card:nth-child(3n)::before{background:#FBBF24}
+        .eq-big{font-size:32px;font-weight:900;color:#1E1B4B;margin-bottom:4px}
+        .eq-small{font-size:13px;font-weight:700;color:#9CA3AF}
+        .eq-hint{position:absolute;bottom:8px;right:10px;font-size:18px;opacity:0.4}
+        .info-box{background:rgba(255,255,255,0.12);backdrop-filter:blur(8px);border-radius:16px;padding:16px 20px;color:white;font-size:15px;font-weight:600;text-align:center;opacity:0.85}
+        /* Practice panel */
+        .panel-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+        .panel-overlay.open{display:flex}
+        .panel-card{background:white;border-radius:28px;width:100%;max-width:540px;padding:32px;box-shadow:0 24px 80px rgba(0,0,0,0.35);position:relative;animation:panelIn 0.4s cubic-bezier(0.34,1.56,0.64,1);max-height:90vh;overflow-y:auto}
+        @keyframes panelIn{from{transform:scale(0.88) translateY(30px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+        .panel-close{position:absolute;top:16px;right:18px;background:#F3F4F6;border:none;border-radius:50%;width:36px;height:36px;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#6B7280;font-weight:800;transition:all 0.2s}
+        .panel-close:hover{background:#E5E7EB;color:#1E1B4B}
+        .panel-eq{font-size:56px;font-weight:900;color:#1E1B4B;text-align:center;margin:12px 0 20px;text-shadow:0 2px 8px rgba(0,0,0,0.08)}
+        .panel-answer-row{display:flex;gap:12px;align-items:center;justify-content:center;margin-bottom:20px}
+        .panel-input{width:160px;padding:14px;border:3px solid #E5E7EB;border-radius:16px;font-family:'Nunito',sans-serif;font-size:28px;font-weight:800;text-align:center;color:#1E1B4B;transition:border-color 0.2s}
+        .panel-input:focus{outline:none;border-color:#A78BFA}
+        .panel-input.correct{border-color:#34D399;background:#D1FAE5;color:#059669}
+        .panel-input.wrong{border-color:#F87171;background:#FEE2E2;animation:shake 0.4s}
+        @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+        .panel-btn{padding:13px 28px;border-radius:50px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;border:none;cursor:pointer;transition:all 0.2s}
+        .panel-btn-check{background:#34D399;color:white}
+        .panel-btn-check:hover:not(:disabled){background:#059669;transform:translateY(-2px)}
+        .panel-btn-check:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+        .panel-btn-next{background:#7C3AED;color:white;display:none}
+        .panel-btn-next:hover{background:#5B21B6;transform:translateY(-2px)}
+        .panel-btn-next:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+        /* Einstein bot */
+        .ein-bot{background:linear-gradient(135deg,#FFF9C4,#FFE082);border-radius:20px;padding:20px;margin-bottom:20px;border:2px solid #FFD54F;position:relative}
+        .ein-avatar{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+        .ein-avatar-img{width:48px;height:48px;background:linear-gradient(135deg,#FFD54F,#FF8F00);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 4px 12px rgba(0,0,0,0.15);flex-shrink:0;font-weight:900;color:white}
+        .ein-name{font-size:16px;font-weight:900;color:#5D4037}
+        .ein-tag{font-size:11px;color:#8D6E63;font-weight:700}
+        .ein-speak-btn{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;background:rgba(255,213,79,0.4);border:none;border-radius:50%;cursor:pointer;font-size:16px;margin-left:8px;transition:all 0.2s;flex-shrink:0}
+        .ein-mute-btn{position:relative;font-size:16px}
+        .ein-mute-btn.muted::before{content:'';position:absolute;top:50%;left:4px;right:4px;height:2.5px;background:#EF4444;border-radius:2px;transform:rotate(-20deg)}
+        .ein-speak-btn:hover{background:rgba(255,213,79,0.7);transform:scale(1.1)}
+        .ein-speak-btn.speaking{animation:speakBounce 0.6s infinite;background:rgba(255,213,79,0.9)}
+        @keyframes speakBounce{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
+        .ein-msgs{min-height:80px;max-height:220px;overflow-y:auto;margin-bottom:12px}
+        .ein-msg{font-size:15px;line-height:1.7;color:#3E2723;margin-bottom:10px;font-weight:600;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,0.7);border-left:3px solid #FFD54F;animation:msgIn 0.3s ease}
+        .ein-msg.user{background:rgba(124,58,237,0.1);border-left-color:#7C3AED;text-align:right;border-left:none;border-right:3px solid #7C3AED}
+        @keyframes msgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+        .panel-fact{background:linear-gradient(135deg,#EDE9FE,#E8DEF8);border-radius:16px;padding:16px;margin-top:16px;font-size:14px;font-weight:700;color:#5B21B6;line-height:1.6;display:none}
+        .panel-fact.show{display:block;animation:panelIn 0.3s ease}
+        .panel-fact-emoji{font-size:24px;margin-bottom:6px}
+        .hint-actions{display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+        @keyframes cf{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+        .cf{position:fixed;top:-10px;width:10px;height:10px;border-radius:2px;pointer-events:none;z-index:9999;animation:cf 2.5s ease-in forwards}
+        .ein-speak-btn{animation:speakBounce 0.6s infinite}
+        .eq-progress-strip{background:rgba(0,0,0,0.07);border-radius:12px;padding:12px 16px;margin-bottom:16px;text-align:center}
+        .eq-progress-text{font-size:15px;font-weight:800;color:#1E1B4B;margin-bottom:8px}
+        .eq-progress-bar{background:rgba(0,0,0,0.1);border-radius:50px;height:10px;overflow:hidden}
+        .eq-progress-fill{height:100%;background:linear-gradient(90deg,#A78BFA,#F472B6);border-radius:50px;transition:width 0.5s ease;min-width:0}
+        .eq-card.eq-done{background:#D1FAE5!important;border:2px solid #34D399!important}
+        .eq-card.eq-done .eq-big{color:#059669!important}
+        .eq-card.eq-done .eq-small{color:#34D399!important}
+        .eq-card.eq-done .eq-hint{opacity:0}
+        .eq-card.eq-done::after{content:'\2713';position:absolute;top:8px;right:10px;font-size:18px;color:#34D399;font-weight:900}
+        @media(max-width:600px){.eq-grid{grid-template-columns:repeat(3,1fr);gap:10px}.eq-big{font-size:24px}.panel-eq{font-size:42px}.panel-card{padding:24px 20px}}
+    </style>
+</head>
+<body>
+    <div class="student-nav">
+        <a href="/learn" class="student-nav-logo">MathQuest</a>
+        <div class="student-nav-right">
+            {% if op == 'div' %}
+        <a href="/learn_div" class="back-btn">All Tables</a>
+        {% elif op == 'add' %}
+        <a href="/learn_add" class="back-btn">All Tables</a>
+        {% elif op == 'sub' %}
+        <a href="/learn_sub" class="back-btn">All Tables</a>
+        {% else %}
+        <a href="/learn" class="back-btn">All Tables</a>
+        {% endif %}
+            <a href="/student/dashboard" class="back-btn">Dashboard</a>
+        </div>
+    </div>
+    <div class="container">
+        <div class="page-header">
+            <h1>{% if op == 'div' %}Division{% elif op == 'add' %}Addition{% elif op == 'sub' %}Subtraction{% else %}Times{% endif %} Table</h1>
+            <p>Tap any equation to practise with Einstein! Then take the quiz to unlock the next table.</p>{% if division %}{% set eq_unit = '÷' %}{% set eq_format = table_num ~ ' x ' ~ '%d' %}{% else %}{% set eq_unit = 'x' %}{% set eq_format = table_num ~ ' x ' ~ '%d' %}{% endif %}
+        </div>
+        <div class="eq-grid" id="eqGrid">
+{% for i in range(1, 16) %}
+            {% if op == 'div' %}
+            <div class="eq-card" data-eq="{{ i }}" onclick="openPanel({{ i }}, {{ i }})">
+                <div class="eq-big">{{ table_num * i }} ÷ {{ table_num }}</div>
+                <div class="eq-small">= ?</div>
+                <div class="eq-hint">Tap to learn</div>
+            </div>
+            {% elif op == 'add' %}
+            <div class="eq-card" data-eq="{{ i }}" onclick="openPanel({{ i }}, {{ i }})">
+                <div class="eq-big">{{ table_num }} + {{ i }}</div>
+                <div class="eq-small">= ?</div>
+                <div class="eq-hint">Tap to learn</div>
+            </div>
+            {% elif op == 'sub' %}
+            <div class="eq-card" data-eq="{{ i }}" onclick="openPanel({{ i }}, {{ i }})">
+                <div class="eq-big">{{ table_num + i }} - {{ table_num }}</div>
+                <div class="eq-small">= ?</div>
+                <div class="eq-hint">Tap to learn</div>
+            </div>
+            {% else %}
+            <div class="eq-card" data-eq="{{ i }}" onclick="openPanel({{ i }}, {{ i * table_num }})">
+                <div class="eq-big">{{ table_num }} x {{ i }}</div>
+                <div class="eq-small">= ?</div>
+                <div class="eq-hint">Tap to learn</div>
+            </div>
+            {% endif %}
+{% endfor %}
+        </div>
+        <div class="info-box">
+            Tap an equation above to open the practice panel. Einstein will explain it step by step!
+        </div>
+    </div>
+
+    <!-- Practice Panel -->
+    <div class="panel-overlay" id="panelOverlay" onclick="if(event.target===this)closePanel()">
+        <div class="panel-card">
+            <button class="panel-close" onclick="closePanel()">x</button>
+
+            <!-- Einstein Bot -->
+            <div class="ein-bot">
+                <div class="ein-avatar">
+                    <div class="ein-avatar-img">A</div>
+                    <div>
+                        <div class="ein-name">Albert Einstein</div>
+                        <div class="ein-tag">Your Maths Tutor</div>
+                    </div>
+                    <button id="einMuteBtn" class="ein-speak-btn ein-mute-btn" onclick="toggleEinMute()" title="Mute Einstein">&#128266;</button>
+                </div>
+                <div class="ein-msgs" id="einMsgs"></div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="eq-progress-strip">
+                <div class="eq-progress-text"><span id="eqDoneCount">0</span> / <span id="eqTotalCount">15</span></div>
+                <div class="eq-progress-bar"><div class="eq-progress-fill" id="eqProgFill"></div></div>
+            </div>
+
+            <!-- Equation display -->
+            <div class="panel-eq" id="panelEq">
+                {% if op == 'div' %}{{ table_num * 1 }} ÷ {{ table_num }} = ?
+                {% elif op == 'add' %}{{ table_num }} + 1 = ?
+                {% elif op == 'sub' %}{{ table_num + 1 }} - {{ table_num }} = ?
+                {% else %}{{ table_num }} x 1 = ?
+                {% endif %}
+            </div>
+
+            <!-- Answer input -->
+            <div class="panel-answer-row">
+                <input type="number" class="panel-input" id="panelInput" placeholder="?" autocomplete="off" onkeydown="if(event.key==='Enter')checkPanelAnswer()">
+                <button class="panel-btn panel-btn-check" id="panelCheckBtn" onclick="checkPanelAnswer()">Check</button>
+            </div>
+
+            <!-- Hint + Explain buttons -->
+            <div class="hint-actions">
+                <button class="panel-btn" style="background:#FFF9C4;color:#5D4037;border:2px solid #FFD54F;font-size:14px;padding:11px 22px" onclick="askHint()">&#128161; Get a Hint</button>
+                <button class="panel-btn" style="background:#EDE9FE;color:#5B21B6;border:2px solid #A78BFA;font-size:14px;padding:11px 22px" onclick="askExplain()">&#128172; Explain It</button>
+            </div>
+
+            <!-- Fact reveal -->
+            <div class="panel-fact" id="panelFact">
+                <div class="panel-fact-emoji" id="panelFactEmoji"></div>
+                <div id="panelFactText"></div>
+            </div>
+
+            <!-- Next button removed - auto-advance -->
+
+        </div>
+    </div>
+
+<script>
+var TABLE = {{ table_num }};
+var OP = '{{ operation|default('mult') }}'.toUpperCase();
+
+// ---- State ----
+var currentI = 1;
+var currentAnswer = (OP === 'DIV' || OP === 'ADD' || OP === 'SUB') ? 1 : TABLE;
+var lastSpokenText = '';
+var einVoices = [];
+var einSpeaking = false;
+var einAudio = null;
+var factIdx = 0;
+var completedCount = 0;
+var equations = [];
+
+// ---- Facts ----
+var FACTS = [
+    {e:'calculator',t:'Multiplication is just fast adding! When we do 7 x 4, we are really doing 7 + 7 + 7 + 7. That is 28!'},
+    {e:'brain',t:'Did you know? 6 x 8 gives the same answer as 8 x 6. The order does not matter - that is called the commutative property!'},
+    {e:'zap',t:'Multiplying by 10 is easy! Just add a zero. 7 x 10 is 70!'},
+    {e:'target',t:'Multiplying by 5 always gives an answer ending in 0 or 5. Try it!'},
+    {e:'rocket',t:'Zero times anything is zero! Even 1,000,000 x 0 = 0. Nothing times something is nothing!'},
+    {e:'gem',t:'The 11 times table has an amazing pattern! 3x11=33, 4x11=44, 5x11=55... Do you see it?'},
+    {e:'arrows',t:'Think of multiplication as groups. 4 x 3 means 4 groups of 3. Add 4 three times: 4 + 4 + 4 = 12!'},
+    {e:'sparkles',t:'Doubling is just multiplying by 2! 9 + 9 = 18, so 9 x 2 = 18. Same thing!'},
+    {e:'moon',t:'When you multiply a number by itself, that is called squaring. 5 x 5 = 25 - we call that "5 squared"!'},
+    {e:'star',t:'Any number times 1 stays exactly the same. 7 x 1 = 7. One of anything leaves it unchanged!'},
+    {e:'trophy',t:'The number 12 is very special - it has more divisors than any smaller number: 1, 2, 3, 4, 6, and 12!'},
+    {e:'123',t:'The x symbol means "groups of". 5 x 3 means "3 groups of 5" or "5 groups of 3"!'},
+    {e:'world',t:'The ancient Egyptians built the pyramids using multiplication - centuries before calculators existed!'},
+    {e:'puzzle',t:'You can check your answer backwards! If 6 x 7 = 42, then 42 divided by 7 = 6!'},
+    {e:'plus',t:'Break hard sums into easy ones! 7 x 6 = (7 x 3) + (7 x 3) = 21 + 21 = 42!'}
+];
+var DIVISION_FACTS = [
+    {e:'arrows',t:'Division is the opposite of multiplication! If 4 x 3 = 12, then 12 ÷ 3 = 4!'},
+    {e:'puzzle',t:'You can always check your division by multiplying back! If 20 ÷ 5 = 4, then check: 4 x 5 = 20!'},
+    {e:'gem',t:'Every multiplication fact gives two division facts! 4 x 5 = 20 means both 20 ÷ 4 = 5 and 20 ÷ 5 = 4!'},
+    {e:'calculator',t:'Division is like sharing equally. 12 ÷ 3 means share 12 items into 3 equal groups - how many in each group?'},
+    {e:'brain',t:'When you divide by 1, the number stays the same! 7 ÷ 1 = 7. One group contains everything!'},
+    {e:'star',t:'Dividing by 2 is finding half! Half of 10 is 10 ÷ 2 = 5!'},
+    {e:'target',t:'Dividing by 5 gives answers ending in 0 or 5! Try it with any multiple of 5!'},
+    {e:'rocket',t:'Zero divided by any number is 0! 0 ÷ 100 = 0. You have nothing to share!'},
+    {e:'sparkles',t:'Dividing by itself gives 1! 6 ÷ 6 = 1. Any number split into groups of itself makes exactly 1 group!'},
+    {e:'trophy',t:'The number 12 can be divided evenly by: 1, 2, 3, 4, 6, and 12! That makes 12 very special!'},
+    {e:'world',t:'The ancient Egyptians used division to build the pyramids - centuries before calculators!'},
+    {e:'123',t:'Think of division as grouping! 20 ÷ 4 means how many groups of 4 fit into 20? Count: 4, 8, 12, 16, 20! Answer: 5 groups!'},
+    {e:'moon',t:'Division by 10 is easy - just remove the zero! 70 ÷ 10 = 7!'},
+    {e:'plus',t:'Big divisions are easier than they look! 56 ÷ 7: think 7 x 8 = 56, so 56 ÷ 7 = 8!'},
+    {e:'zap',t:'When you know your times tables, division is a breeze! They are two sides of the same coin!'}
+];
+var ADDITION_FACTS = [
+    {e:'calculator',t:'Addition is just counting forward! 7 + 4 means start at 7 and count forward 4 steps: 8, 9, 10, 11!'},
+    {e:'sparkles',t:'Adding 0 to any number leaves it unchanged! 7 + 0 = 7. Zero means nothing added.'},
+    {e:'arrows',t:'You can add in any order! 3 + 8 gives the same answer as 8 + 3. That is the commutative property!'},
+    {e:'brain',t:'Doubling is a special addition! 7 + 7 = 14. If you know 7 + 7, you also know 7 + 6 = 13 and 7 + 8 = 15!'},
+    {e:'gem',t:'Near doubles! 6 + 7 is almost 6 + 6 = 12, so 6 + 7 = 13. Just one more!'},
+    {e:'rocket',t:'Adding 10 is easy! Just add 1 to the tens digit. 7 + 10 = 17!'},
+    {e:'target',t:'Adding 5 always gives an answer ending in 0 or 5! Try 7 + 5 = 12, 8 + 5 = 13!'},
+    {e:'trophy',t:'The number 10 is very special - it is the basis of our whole number system!'},
+    {e:'world',t:'Ancient Romans used addition for building their amazing temples and roads!'},
+    {e:'star',t:'If 7 + 5 = 12, then 12 - 5 = 7! Addition and subtraction are opposites!'},
+    {e:'zap',t:'Break and make! 7 + 8 = 7 + 3 + 5 = 10 + 5 = 15!'},
+    {e:'moon',t:'Adding 1 just means the next number! 7 + 1 = 8, 12 + 1 = 13!'},
+    {e:'123',t:'You can add in any order! 9 + 4 + 1 = 10 + 4 = 14!'},
+    {e:'plus',t:'Big additions are just small steps! 15 + 7 = 15 + 5 + 2 = 20 + 2 = 22!'},
+    {e:'gem',t:'Adding 9 is like adding 10 then taking 1 away! 7 + 9 = 7 + 10 - 1 = 16!'}
+];
+var SUBTRACTION_FACTS = [
+    {e:'arrows',t:'Subtraction is the opposite of addition! If 4 + 5 = 9, then 9 - 5 = 4 and 9 - 4 = 5!'},
+    {e:'puzzle',t:'You can always check subtraction with addition! If 12 - 5 = 7, then check: 7 + 5 = 12!'},
+    {e:'rocket',t:'Subtracting 0 leaves the number unchanged! 7 - 0 = 7. Easy!'},
+    {e:'star',t:'Subtracting 1 just means the previous number! 7 - 1 = 6, 12 - 1 = 11!'},
+    {e:'target',t:'Subtracting 5 from a number ending in 0 or 5 gives the same last digit! 10 - 5 = 5, 15 - 5 = 10!'},
+    {e:'gem',t:'Near doubles for subtraction! If 8 - 4 = 4, then 8 - 3 = 5. Just one more!'},
+    {e:'brain',t:'Subtracting 10 is easy! Just reduce the tens digit by 1. 17 - 10 = 7!'},
+    {e:'world',t:'Ancient Egyptians used subtraction to keep track of supplies and food!'},
+    {e:'zap',t:'Break apart to subtract! 15 - 7 = 15 - 5 - 2 = 10 - 2 = 8!'},
+    {e:'moon',t:'When subtracting from a number ending in 0, change the 0 to 10 and reduce the other digit! 20 - 7: 0 needs 10, take 7 from 10 = 3, and 1 becomes 0, so 20 - 7 = 13!'},
+    {e:'calculator',t:'Subtraction is like taking away! If you have 12 apples and give away 5, you have 7 left!'},
+    {e:'trophy',t:'The number 12 can be broken into 7 + 5, so 12 - 7 = 5 and 12 - 5 = 7!'},
+    {e:'sparkles',t:'Adding and subtracting are opposites! They undo each other. 8 + 3 = 11, 11 - 3 = 8!'},
+    {e:'123',t:'You can subtract in any order for the answer, but always put the bigger number first! 9 - 4, not 4 - 9!'},
+    {e:'plus',t:'Big subtractions are just easy steps! 18 - 7 = 18 - 8 + 1 = 10 + 1 = 11!'}
+];
+function nextFact() {
+    var facts = FACTS;
+    if (OP === 'DIV') facts = DIVISION_FACTS;
+    else if (OP === 'ADD') facts = ADDITION_FACTS;
+    else if (OP === 'SUB') facts = SUBTRACTION_FACTS;
+    var f = facts[factIdx % facts.length];
+    factIdx++;
+    return f;
+}
+
+// ---- Speech (friendly older English voice) ----
+function einLoadVoices() {
+    if (!('speechSynthesis' in window)) return;
+    var all = window.speechSynthesis.getVoices();
+    // Directly find the best male English voice (in priority order)
+    var maleNames = ['Google UK English Male','Microsoft George','Google US English Male','David','Mark','Tom','James','John','Daniel','Richard','Thomas','Alex','Peter','Paul','Michael'];
+    var pick = null;
+    for (var n = 0; n < maleNames.length; n++) {
+        pick = all.find(function(v){ return v.lang.startsWith('en') && v.name.indexOf(maleNames[n]) >= 0; });
+        if (pick) break;
+    }
+    if (!pick) pick = all.find(function(v){ return v.lang.startsWith('en'); });
+    einVoices = pick ? [pick] : [];
+    // Add remaining English voices
+    all.forEach(function(v){ if (v.lang.startsWith('en') && einVoices.indexOf(v) < 0) einVoices.push(v); });
+}
+
+function einStrip(html) {
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').replace(/&amp;/g, 'and').replace(/&lt;/g, '<').replace(/&gt;/g, '>').trim();
+}
+
+
+// ---- Mute toggle ----
+var einMuted = false;
+function toggleEinMute() {
+    einMuted = !einMuted;
+    var btn = document.getElementById('einMuteBtn');
+    if (btn) {
+        btn.classList.toggle('muted', einMuted);
+        btn.title = einMuted ? 'Unmute Einstein' : 'Mute Einstein';
+    }
+    if (einMuted) {
+        if (einAudio) { einAudio.pause(); einAudio = null; }
+        einSpeaking = false;
+        if (btn) btn.classList.remove('speaking');
+    }
+}
+function einSpeak(text, cb) {
+    var raw = einStrip(text);
+    if (!raw) { if (cb) cb(); return; }
+    lastSpokenText = raw;
+    var btn = document.getElementById('einMuteBtn');
+    // Cancel any current audio
+    if (einAudio) { einAudio.pause(); einAudio = null; }
+    einSpeaking = false;
+    if (btn) btn.classList.remove('speaking');
+    if (einMuted) { if (cb) cb(); return; }
+    // Fetch TTS audio from server
+    fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: raw, voice: 'en-GB-RyanNeural' })
+    }).then(function(res) {
+        if (!res.ok) { if (cb) cb(); return; }
+        return res.blob();
+    }).then(function(blob) {
+        if (einMuted) { if (cb) cb(); return; }
+        var url = URL.createObjectURL(blob);
+        einAudio = new Audio(url);
+        einAudio.volume = 1.0;
+        einSpeaking = true;
+        if (btn) btn.classList.add('speaking');
+        einAudio.play().catch(function() { einSpeaking = false; if (btn) btn.classList.remove('speaking'); });
+        einAudio.onended = einAudio.onerror = function() {
+            einSpeaking = false;
+            if (btn) btn.classList.remove('speaking');
+            URL.revokeObjectURL(url);
+            if (cb) cb();
+        };
+    }).catch(function() {
+        einSpeaking = false;
+        if (btn) btn.classList.remove('speaking');
+        if (cb) cb();
+    });
+}
+
+// ---- Einstein says something (shown + spoken) ----
+function einSay(html, cb) {
+    var msgs = document.getElementById('einMsgs');
+    var div = document.createElement('div');
+    div.className = 'ein-msg';
+    div.innerHTML = html;
+    msgs.appendChild(div);
+    msgs.scrollTop = msgs.scrollHeight;
+    einSpeak(html, cb);
+}
+
+// ---- Grammar helpers ----
+function plural(n, word) {
+    return n === 1 ? word : word + 's';
+}
+
+// ---- HINTS ----
+function getHint() {
+    var t = TABLE, i = currentI, a = currentAnswer;
+    var n = i;
+
+    if (OP === 'DIV') {
+        var product = t * n;
+        if (t === 1) return 'Easy! Any number divided by 1 equals itself. So ' + product + ' ÷ 1 = ' + a + '! When we divide by 1, we just keep the other number!';
+        if (n === 2) return 'Half! ' + product + ' ÷ ' + t + ' means half of ' + product + ', which is ' + a + '!';
+        if (n === t) return 'When the divisor equals the answer, ' + product + ' ÷ ' + t + ' = ' + a + ' because ' + t + ' x ' + t + ' = ' + product + '!';
+        return 'Think multiplication! Since ' + t + ' x ' + n + ' = ' + product + ', then ' + product + ' ÷ ' + t + ' = ' + n + '! Reversing multiplication gives you the answer.';
+    }
+    if (OP === 'ADD') {
+        if (n === 1) return 'Easy! Any number plus 1 is just the next number! So ' + t + ' + 1 = ' + a + '. Just count forward one step!';
+        if (n === 2) return 'Doubling! ' + t + ' + 2 means two steps forward. ' + t + ' + 1 = ' + (t+1) + ', then one more to ' + a + '!';
+        if (n === 10) return 'The 10 trick! ' + t + ' + 10 = ' + a + '. Just add 1 to the tens digit!';
+        return 'Start at ' + t + ' and count forward ' + n + ' steps! ' + t + ' + ' + n + ' = ' + a + '. You can do it!';
+    }
+    if (OP === 'SUB') {
+        var total = t + n;
+        if (n === 1) return 'Easy! ' + total + ' minus ' + t + ' = ' + a + '. Just one step back!';
+        if (n === t) return 'Half! ' + total + ' - ' + t + ' means half of ' + total + ', which is ' + a + '!';
+        return 'Think addition! Since ' + t + ' + ' + n + ' = ' + total + ', then ' + total + ' - ' + t + ' = ' + n + '. Adding and subtracting are opposites!';
+    }
+
+    if (n === 1) {
+        return 'Here is a great trick: any number times 1 is always the same number! So ' + t + ' x 1 = ' + a + '. Just the ' + t + ' itself!';
+    }
+    if (n === 2) {
+        return 'Doubling! ' + t + ' x 2 means ' + t + ' + ' + t + '. That is ' + (t*2) + '! You can also think of it as doubling ' + t + '.';
+    }
+    if (n <= 5) {
+        return 'Try counting in ' + t + 's! Start at ' + t + ' and keep adding ' + t + ' a total of ' + n + ' times. So: ' + buildCounting(t, n) + '. Did you get ' + a + '?';
+    }
+    if (n === 10) {
+        return 'The easiest one! Just add a zero to ' + t + ' and you get ' + a + '! So ' + t + ' x 10 = ' + a + '.';
+    }
+    if (n === 11) {
+        return 'The 11 trick! For ' + t + ' x 11, just write ' + t + ' twice... ' + t + t + '! Wait, that is not quite right for bigger numbers. Try counting in ' + t + 's!';
+    }
+    if (n <= 7) {
+        return 'Building up! We know ' + t + ' x ' + (n-1) + ' = ' + (t*(n-1)) + ', so just add one more ' + t + '! ' + (t*(n-1)) + ' + ' + t + ' = ' + a + '!';
+    }
+    // General fallback
+    return 'Counting in ' + t + 's is the surest way! Here goes: ' + buildCounting(t, n) + '. Your answer should be ' + a + '!';
+}
+
+function buildCounting(t, n) {
+    var parts = [];
+    for (var k = 1; k <= Math.min(n, 12); k++) parts.push(t * k);
+    var str = parts.join(', ');
+    if (n > 12) str += '...';
+    return str;
+}
+
+// ---- FULL EXPLANATION ----
+function getFullExplanation() {
+    var t = TABLE, i = currentI, a = currentAnswer;
+
+    if (OP === 'DIV') {
+        var product = t * i;
+        var intro = 'Let me explain ' + product + ' divided by ' + t + ' step by step.';
+        var definition = 'Division undoes multiplication! ' + product + ' ÷ ' + t + ' means: how many groups of ' + t + ' fit into ' + product + '?';
+        var showing = 'Since ' + t + ' x ' + i + ' = ' + product + ', there are exactly ' + i + ' groups of ' + t + ' in ' + product + '.';
+        var answer = 'So ' + product + ' ÷ ' + t + ' = ' + a + '!';
+        var celebration = i >= 10 ? 'That is a really big division - well done!' : 'Division is easy when you know your times tables!';
+        return intro + ' ' + definition + ' ' + showing + ' ' + answer + ' ' + celebration;
+    }
+    if (OP === 'ADD') {
+        var intro = 'Let me explain ' + t + ' plus ' + i + ' step by step.';
+        var definition = 'Addition means count forward! Start at ' + t + ' and count ' + i + ' more steps.';
+        var showing = 'Counting forward: ' + t + ', ' + (t+1) + ', ' + (t+2) + '... all the way to ' + a + '.';
+        var answer = 'So ' + t + ' + ' + i + ' = ' + a + '!';
+        var celebration = i >= 10 ? 'That is a big addition - well done!' : 'Addition is just counting forward!';
+        return intro + ' ' + definition + ' ' + showing + ' ' + answer + ' ' + celebration;
+    }
+    if (OP === 'SUB') {
+        var total = t + i;
+        var intro = 'Let me explain ' + total + ' minus ' + t + ' step by step.';
+        var definition = 'Subtraction means count backwards! Start at ' + total + ' and count ' + t + ' steps back.';
+        var showing = 'Since ' + t + ' + ' + i + ' = ' + total + ', then ' + total + ' - ' + t + ' = ' + i + '. They are opposites!';
+        var answer = 'So ' + total + ' - ' + t + ' = ' + a + '!';
+        var celebration = i >= 10 ? 'That is a big subtraction - well done!' : 'Subtraction undoes addition!';
+        return intro + ' ' + definition + ' ' + showing + ' ' + answer + ' ' + celebration;
+    }
+
+    var groups = [];
+    for (var k = 0; k < i; k++) groups.push(t);
+    var groupsStr = groups.join(' + ');
+    var running = [];
+    var sum = 0;
+    for (var k = 0; k < i; k++) { sum += t; running.push(sum); }
+    var runningStr = running.join(' -> ');
+
+    var intro = 'Let me explain ' + t + ' times ' + i + ' step by step.';
+    var definition = 'First, remember what times means. ' + t + ' times ' + i + ' means add ' + t + ' to itself ' + i + ' time' + (i > 1 ? 's' : '') + '.';
+    var showing = 'Here it is written out: ' + groupsStr + '.';
+    var counting = 'Counting in ' + t + 's: ' + runningStr + '.';
+    var answer = 'So ' + t + ' times ' + i + ' equals ' + a + '!';
+    var celebration = i >= 10 ? 'That is a really big multiplication - well done for working through it!' : 'You are doing great at this!';
+
+    return intro + ' ' + definition + ' ' + showing + ' ' + counting + ' ' + answer + ' ' + celebration;
+}
+
+// ---- Ask Hint (spoken aloud) ----
+function askHint() {
+    var h = getHint();
+    einSay(h);
+}
+
+// ---- Ask Full Explanation (spoken aloud) ----
+function askExplain() {
+    var e = getFullExplanation();
+    einSay(e);
+}
+
+// ---- Open panel for equation i ----
+function openPanel(i, answer) {
+    currentI = i;
+    currentAnswer = answer;
+    updateProgress();
+    var eqText = (OP === 'DIV') ? TABLE + ' ÷ ' + i
+        : (OP === 'ADD') ? TABLE + ' + ' + i
+        : (OP === 'SUB') ? (TABLE + i) + ' - ' + TABLE
+        : TABLE + ' x ' + i;
+
+    document.getElementById('panelEq').textContent = eqText + ' = ?';
+    var inp = document.getElementById('panelInput');
+    inp.value = '';
+    inp.className = 'panel-input';
+    inp.disabled = false;
+    inp.focus();
+    document.getElementById('panelCheckBtn').disabled = false;
+    document.getElementById('panelCheckBtn').style.display = '';
+    document.getElementById('panelFact').classList.remove('show');
+    document.getElementById('panelOverlay').classList.add('open');
+
+    // Reset progress bar for this panel
+    completedCount = 0;
+    updateProgress();
+
+    var msgs = document.getElementById('einMsgs');
+    // Greet on first equation of each table; short greeting on all others
+    if (currentI === 1) {
+        msgs.innerHTML = '';
+        einSay('Here we go! Let us work on <strong>' + eqText + '</strong>. Type your answer, or tap <strong>Get a Hint</strong> if you need help!');
+    } else {
+        msgs.innerHTML = '';
+        einSay('Now let us try <strong>' + eqText + '</strong>.');
+    }
+}
+
+function tMul(n) { return TABLE * n; }
+
+function updateProgress() {
+    var pct = Math.round((completedCount / 15) * 100);
+    var fill = document.getElementById('eqProgFill');
+    var count = document.getElementById('eqDoneCount');
+    if (fill) fill.style.width = pct + '%';
+    if (count) count.textContent = completedCount;
+}
+
+function markGridDone(i) {
+    var cards = document.querySelectorAll('.eq-card');
+    cards.forEach(function(card) {
+        if (card.dataset.eq === String(i)) {
+            card.classList.add('eq-done');
+        }
+    });
+}
+
+function closePanel() {
+    document.getElementById('panelOverlay').classList.remove('open');
+}
+
+// ---- Check answer ----
+function checkPanelAnswer() {
+    var inp = document.getElementById('panelInput');
+    var val = parseInt(inp.value);
+    if (isNaN(val)) {
+        inp.classList.add('wrong');
+        setTimeout(function(){ inp.classList.remove('wrong'); }, 400);
+        return;
+    }
+    inp.disabled = true;
+    document.getElementById('panelCheckBtn').disabled = true;
+
+    if (val === currentAnswer) {
+        inp.classList.add('correct');
+        spawnConfetti(20);
+        completedCount++;
+        updateProgress();
+        markGridDone(currentI);
+        var encouragements = ['Fantastic work!', 'Superb!', 'Brilliant!', 'Excellent!']; var encMsg = encouragements[(completedCount - 1) % encouragements.length]; einSpeak('Correct! ' + currentAnswer + ' is right! ' + encMsg, null);
+        setTimeout(function() {
+            var f = nextFact();
+            document.getElementById('panelFactEmoji').textContent = f.e;
+            document.getElementById('panelFactText').textContent = f.t;
+            document.getElementById('panelFact').classList.add('show');
+            document.getElementById('panelCheckBtn').style.display = 'none';
+            // Auto-advance - poll until Einstein finishes speaking, then advance
+            var advanceWhenDone = function() {
+                if (currentI >= 15) {
+                    var completionMsg = (OP === 'DIV') ? 'You have completed the ' + TABLE + ' division table! Amazing work! You are a superstar!'
+                        : (OP === 'ADD') ? 'You have completed the ' + TABLE + ' addition table! Amazing work! You are a superstar!'
+                        : (OP === 'SUB') ? 'You have completed the ' + TABLE + ' subtraction table! Amazing work! You are a superstar!'
+                        : 'You have completed the ' + TABLE + ' times table! Amazing work! You are a superstar!';
+                    einSpeak(completionMsg, null);
+                    spawnConfetti(60);
+                    document.getElementById('panelFactEmoji').textContent = '\u{1F3C6}';
+                    document.getElementById('panelFactText').textContent = 'All 15 equations done! Tap X to close and take the quiz!';
+                    document.getElementById('panelFact').classList.add('show');
+                } else {
+                    nextEquation();
+                }
+            };
+            var tryAdvance = function() {
+                // Give Einstein a moment to start speaking, then poll
+                setTimeout(function() {
+                    if (einSpeaking) {
+                        var iv = setInterval(function() {
+                            if (!einSpeaking) {
+                                clearInterval(iv);
+                                advanceWhenDone();
+                            }
+                        }, 150);
+                    } else {
+                        advanceWhenDone();
+                    }
+                }, 800);
+            };
+            tryAdvance();
+        }, 800);
+    } else {
+        inp.classList.add('wrong');
+        inp.value = '';
+        inp.disabled = false;
+        inp.focus();
+        inp.classList.remove('wrong');
+        einSpeak('Not quite! Have another think, and try again.', null);
+    }
+}
+
+// ---- Next equation ----
+function nextEquation() {
+    // Move to next equation
+    var nextI = currentI + 1;
+    if (nextI > 15) {
+        closePanel();
+        return;
+    }
+    var nextAnswer = TABLE * nextI;
+    // Re-open panel for next equation
+    openPanel(nextI, nextAnswer);
+}
+
+// ---- Confetti ----
+function spawnConfetti(n) {
+    var cols = ['#A78BFA','#34D399','#FBBF24','#F97316','#F472B6','#60A5FA'];
+    for (var i = 0; i < n; i++) {
+        var c = document.createElement('div');
+        c.className = 'cf';
+        c.style.left = Math.random() * 100 + '%';
+        c.style.background = cols[Math.floor(Math.random() * cols.length)];
+        c.style.animationDelay = Math.random() * 1.5 + 's';
+        c.style.width = c.style.height = (Math.random() * 8 + 6) + 'px';
+        document.body.appendChild(c);
+        setTimeout(function(x){ x.remove(); }, 4000, c);
+    }
+}
+
+// ---- Keyboard ----
+document.addEventListener('keydown', function(e) {
+    var panel = document.getElementById('panelOverlay');
+    if (!panel || !panel.classList.contains('open')) return;
+    if (e.key === 'Escape') closePanel();
+    if (e.key === 'Enter') {
+        var inp = document.getElementById('panelInput');
+        if (inp && !inp.disabled) checkPanelAnswer();
+    }
+});
+
+// ---- Init voices ----
+window.addEventListener('load', function() {
+    if ('speechSynthesis' in window) {
+        einLoadVoices();
+        window.speechSynthesis.onvoiceschanged = einLoadVoices;
+    }
+});
+</script>
+</body>
+</html>

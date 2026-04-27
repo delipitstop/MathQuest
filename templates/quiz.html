@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}{{ topic_data.name }} Quiz - MathQuest{% endblock %}
+{% block body %}
+<div class="student-bg">
+    <div class="student-nav">
+        <a href="/student/dashboard" class="student-nav-logo">🌟 MathQuest</a>
+        <a href="/student/dashboard" class="btn btn-sm" style="background:rgba(255,255,255,0.2);color:white;border-radius:40px;font-weight:700;text-decoration:none;padding:8px 16px">← Exit</a>
+    </div>
+    
+    <div class="quiz-container">
+        <div class="quiz-header">
+            <h1>{{ topic_data.emoji }} {{ topic_data.name }} Quiz!</h1>
+            <p>Answer all 10 questions. You need 80% to pass! 📝</p>
+        </div>
+        
+        <form id="quizForm" method="POST" action="/submit_quiz">
+            {% for q in questions %}
+            <div class="quiz-t-card" id="q{{ q.id }}" style="background:white;border-radius:24px;padding:28px;margin-bottom:20px;box-shadow:0 4px 16px rgba(0,0,0,0.1);animation:popIn {{ loop.index * 0.1 }}s ease-out">
+                <div class="quiz-q-num">Question {{ q.id }} of 10</div>
+                <div class="quiz-q-text">{{ q.question }} = ?</div>
+                <input type="number" name="q{{ q.id }}" class="quiz-q-input" placeholder="Your answer" autocomplete="off">
+                <input type="hidden" name="correct_q{{ q.id }}" value="{{ q.answer }}">
+            </div>
+            {% endfor %}
+            
+            <div style="text-align:center;margin-top:24px">
+                <button type="button" onclick="submitQuiz()" class="btn btn-green btn-lg" style="padding:20px 48px;border-radius:60px;font-size:22px;font-weight:900;background:#34D399;color:white;border:none;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,0.15)">Submit Answers! 🚀</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function submitQuiz() {
+    const inputs = document.querySelectorAll('.quiz-q-input');
+    let allAnswered = true;
+    inputs.forEach(inp => {
+        if (!inp.value.trim()) {
+            allAnswered = true; // Allow partial
+            inp.style.borderColor = '#F87171';
+        } else {
+            inp.style.borderColor = '#E5E7EB';
+        }
+    });
+    
+    const form = document.getElementById('quizForm');
+    const formData = new FormData(form);
+    
+    fetch('/submit_quiz', {
+        method: 'POST',
+        body: formData
+    }).then(r => r.text())
+      .then(html => {
+          document.open();
+          document.write(html);
+          document.close();
+      });
+}
+
+const style = document.createElement('style');
+style.textContent = `@keyframes popIn { from { transform: scale(0.9) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }`;
+document.head.appendChild(style);
+</script>
+{% endblock %}

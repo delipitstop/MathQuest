@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Add Child - MathQuest{% endblock %}
+{% block body %}
+<div class="form-box" style="margin-top: 60px;">
+    <div style="text-align:center;margin-bottom:24px">
+        <div style="font-size:56px">👧🧒</div>
+        <h1 class="form-title">Add Your Child</h1>
+        <p class="form-subtitle">Create a fun account for your child!</p>
+    </div>
+    
+    <form method="POST">
+        <div class="form-group">
+            <label>Child's Name</label>
+            <input type="text" name="name" placeholder="e.g. Mia" required>
+        </div>
+        
+        <div class="form-group">
+            <label>4-Digit PIN</label>
+            <input type="text" name="pin" placeholder="1234" maxlength="4" pattern="[0-9]{4}" required>
+            <small style="color:#6B7280;font-size:12px;margin-top:4px;display:block">Your child will use this PIN to log in</small>
+        </div>
+        
+        <div class="form-group">
+            <label>Choose an Avatar</label>
+            <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">
+                {% for emoji in ['🦁','🐼','🦊','🐨','🐯','🦄','🐸','🐵','🦋','🌟','🚀','⚡'] %}
+                <label style="cursor:pointer">
+                    <input type="radio" name="avatar" value="{{ emoji }}" style="display:none" {% if loop.first %}checked{% endif %}>
+                    <span style="font-size:32px;transition:transform 0.2s;display:inline-block" onclick="this.parentElement.querySelector('input').checked=true;document.querySelectorAll('.avatar-option').forEach(e=>e.style.transform='scale(1)');this.style.transform='scale(1.3)'">{{ emoji }}</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <button type="submit" class="btn btn-green btn-lg" style="width:100%;margin-top:8px">Create Account 🎉</button>
+    </form>
+    
+    <p style="text-align:center;margin-top:20px">
+        <a href="/parent/dashboard" style="color:#7C3AED;font-weight:700;text-decoration:none">← Back to Dashboard</a>
+    </p>
+</div>
+{% endblock %}

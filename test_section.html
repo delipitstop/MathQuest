@@ -1,0 +1,26 @@
+import sys
+sys.stdout.reconfigure(encoding='utf-8')
+
+with open(r'C:\Users\Luis\.openclaw\workspace\work\mathquest\mathquest\templates\parent_dashboard2.html', 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Replace the Einstein section (lines 638-686) with a simple test div
+lines = content.split('\n')
+print(f'Total lines: {len(lines)}')
+print(f'Line 638: {repr(lines[637][:80])}')
+print(f'Line 686: {repr(lines[685][:80])}')
+
+# Check what the einstein section looks like
+einstein_section = '\n'.join(lines[637:686])
+print(f'Einstein section length: {len(einstein_section)}')
+
+# Create a simple test div to replace it
+test_div = '\n\n<!-- EINSTEIN TEST -->\n<div id="einstein-test" style="background:yellow;padding:20px;color:black;font-size:24px;font-weight:900;text-align:center;position:fixed;bottom:24px;right:24px;z-index:9999">\n    A - TEST BUTTON\n</div>\n\n'
+
+new_lines = lines[:637] + [test_div] + lines[686:]
+new_content = '\n'.join(new_lines)
+
+with open(r'C:\Users\Luis\.openclaw\workspace\work\mathquest\mathquest\templates\parent_dashboard2.html', 'w', encoding='utf-8') as f:
+    f.write(new_content)
+
+print(f'Done! New total lines: {len(new_lines)}')

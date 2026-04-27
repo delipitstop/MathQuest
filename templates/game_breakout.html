@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Breakout - MathQuest{% endblock %}
+{% block body %}
+<style>
+body { margin: 0; background: #0a0a2e; }
+.game-wrap { max-width: 900px; margin: 0 auto; padding: 16px; }
+.game-top { display: flex; align-items: center; gap: 16px; margin-bottom: 12px; }
+.game-back { background: rgba(255,255,255,0.1); color: white; padding: 8px 18px; border-radius: 40px; text-decoration: none; font-size: 14px; font-weight: 700; border: none; cursor: pointer; }
+.game-title { color: #FBBF24; font-size: 22px; font-weight: 900; margin: 0; }
+.game-frame { width: 100%; height: 75vh; border: 3px solid #A78BFA; border-radius: 16px; overflow: hidden; background: #000; }
+</style>
+<div class="game-wrap">
+    <div class="game-top">
+        <a href="/student/dashboard" class="game-back">← Dashboard</a>
+        <h1 class="game-title">🧱 Breakout</h1>
+    </div>
+    <iframe src="/static/games/breakout/index.html" class="game-frame" frameborder="0"></iframe>
+</div>
+{% endblock %}

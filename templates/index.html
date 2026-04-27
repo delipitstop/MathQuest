@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MathQuest — Fun Maths for Kids</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; background: #F8F7FF; color: #1E1B4B; }
+
+        /* NAV */
+        nav {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            padding: 16px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.06);
+        }
+        .nav-logo { font-size: 22px; font-weight: 900; color: #7C3AED; text-decoration: none; }
+        .nav-logo span { color: #F97316; }
+        .nav-links { display: flex; gap: 24px; align-items: center; }
+        .nav-links a { text-decoration: none; color: #6B7280; font-weight: 700; font-size: 15px; }
+        .nav-links a:hover { color: #7C3AED; }
+        .nav-cta {
+            background: linear-gradient(135deg,#7C3AED,#6D28D9);
+            color: white !important;
+            padding: 10px 22px;
+            border-radius: 50px;
+            transition: all 0.2s;
+        }
+        .nav-cta:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(124,58,237,0.4); }
+
+        /* HERO */
+        .hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 80px 40px 60px;
+            text-align: center;
+            color: white;
+        }
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            padding: 6px 18px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            backdrop-filter: blur(4px);
+        }
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 900;
+            margin-bottom: 16px;
+            line-height: 1.1;
+            text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .hero h1 span { color: #FBBF24; }
+        .hero p {
+            font-size: 20px;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto 32px;
+            line-height: 1.6;
+        }
+        .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+        .btn-hero-buy {
+            background: linear-gradient(135deg,#FF5C5C,#FF2D55);
+            color: white;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 17px;
+            text-decoration: none;
+            box-shadow: 0 6px 24px rgba(255,45,85,0.4);
+            transition: all 0.2s;
+        }
+        .btn-hero-buy:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(255,45,85,0.5); }
+        .btn-hero-demo {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 16px 36px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 17px;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
+            border: 2px solid rgba(255,255,255,0.3);
+            transition: all 0.2s;
+        }
+        .btn-hero-demo:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
+        /* PRICE STRIP */
+        .price-strip {
+            background: white;
+            padding: 24px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .price-strip-item { display: flex; align-items: center; gap: 10px; font-weight: 700; color: #374151; font-size: 15px; }
+        .price-strip-item .emoji { font-size: 22px; }
+        .price-main { font-size: 28px; font-weight: 900; color: #7C3AED; }
+        .price-note { font-size: 13px; color: #9CA3AF; }
+
+        /* SECTION COMMON */
+        .section { padding: 72px 40px; max-width: 1100px; margin: 0 auto; }
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            color: #1E1B4B;
+        }
+        .section-sub {
+            text-align: center;
+            font-size: 17px;
+            color: #6B7280;
+            margin-bottom: 48px;
+            max-width: 560px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* FEATURES */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+            transition: all 0.2s;
+        }
+        .feature-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
+        .feature-img { width: 100%; height: 180px; object-fit: cover; }
+        .feature-body { padding: 20px; }
+        .feature-icon { font-size: 28px; margin-bottom: 8px; }
+        .feature-title { font-size: 16px; font-weight: 800; color: #1E1B4B; margin-bottom: 6px; }
+        .feature-desc { font-size: 14px; color: #6B7280; line-height: 1.5; }
+
+        /* HOW IT WORKS */
+        .how-section { background: white; padding: 72px 40px; }
+        .how-steps { display: flex; gap: 40px; justify-content: center; flex-wrap: wrap; max-width: 1000px; margin: 0 auto; }
+        .how-step { flex: 1; min-width: 200px; text-align: center; }
+        .how-step-num {
+            width: 56px; height: 56px;
+            background: linear-gradient(135deg,#7C3AED,#6D28D9);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            margin: 0 auto 14px;
+            box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+        }
+        .how-step h3 { font-size: 17px; font-weight: 800; color: #1E1B4B; margin-bottom: 8px; }
+        .how-step p { font-size: 14px; color: #6B7280; line-height: 1.5; }
+
+        /* SCREENSHOTS */
+        .screenshots-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+        .screenshot-frame {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .screenshot-frame img { width: 100%; display: block; }
+        .screenshot-label {
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #6B7280;
+            text-align: center;
+            background: #F9FAFB;
+        }
+
+        /* REVIEWS */
+        .reviews-bg { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); padding: 72px 40px; }
+        .reviews-bg .section-title { color: white; }
+        .reviews-bg .section-sub { color: rgba(255,255,255,0.8); }
+        .reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+        .review-card {
+            background: white;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+        }
+        .review-stars { color: #FBBF24; font-size: 18px; margin-bottom: 10px; }
+        .review-text { font-size: 15px; color: #374151; line-height: 1.6; margin-bottom: 14px; font-style: italic; }
+        .review-author { display: flex; align-items: center; gap: 10px; }
+        .review-avatar { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; color: white; font-weight: 900; font-size: 16px; }
+        .review-name { font-weight: 800; font-size: 14px; color: #1E1B4B; }
+        .review-sub { font-size: 12px; color: #9CA3AF; }
+
+        /* FINAL CTA */
+        .cta-section { padding: 80px 40px; text-align: center; background: #1E1B4B; color: white; }
+        .cta-section h2 { font-size: 40px; font-weight: 900; margin-bottom: 12px; }
+        .cta-section p { font-size: 18px; opacity: 0.8; margin-bottom: 32px; }
+        .cta-price { font-size: 48px; font-weight: 900; color: #FBBF24; margin-bottom: 8px; }
+        .cta-price-note { font-size: 14px; opacity: 0.6; margin-bottom: 28px; }
+        .btn-buy-final {
+            display: inline-block;
+            background: linear-gradient(135deg,#FF5C5C,#FF2D55);
+            color: white;
+            padding: 18px 48px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 18px;
+            text-decoration: none;
+            box-shadow: 0 8px 32px rgba(255,45,85,0.5);
+            transition: all 0.2s;
+        }
+        .btn-buy-final:hover { transform: translateY(-3px); box-shadow: 0 12px 40px rgba(255,45,85,0.6); }
+
+        /* FOOTER */
+        footer { background: #111827; color: #9CA3AF; padding: 32px 40px; text-align: center; font-size: 13px; }
+
+        /* PARENT GATE */
+        .parent-gate {
+            background: linear-gradient(135deg,#059669,#34D399);
+            padding: 18px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .parent-gate span { color: white; font-weight: 700; font-size: 15px; }
+        .parent-gate a {
+            background: white;
+            color: #059669;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 800;
+            font-size: 14px;
+            text-decoration: none;
+        }
+        .parent-gate a:hover { background: #F0FDF4; }
+
+        @media (max-width: 768px) {
+            .features-grid, .reviews-grid, .screenshots-grid { grid-template-columns: 1fr; }
+            .hero h1 { font-size: 36px; }
+            nav { padding: 14px 20px; }
+            .section, .how-section, .reviews-bg, .cta-section { padding: 48px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <a href="/" class="nav-logo">Math<span>Quest</span> 🎮</a>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it Works</a>
+            <a href="#reviews">Reviews</a>
+            <a href="/buy" class="nav-cta">Get Access — £5</a>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <div class="hero">
+        <div class="hero-badge">✨ Used by families across the UK</div>
+        <h1>Make Maths<br><span>Fun for Your Kids</span></h1>
+        <p>Times tables, division, addition and subtraction — taught through games, quizzes and an AI tutor that adapts to your child's pace. One payment, forever access.</p>
+        <div class="hero-actions">
+            <a href="/buy" class="btn-hero-buy">🛒 Get Access — £5</a>
+            <a href="#how-it-works" class="btn-hero-demo">See How it Works →</a>
+        </div>
+    </div>
+
+    <!-- PRICE STRIP -->
+    <div class="price-strip">
+        <div class="price-strip-item"><span class="emoji">💷</span> One-time payment — no subscription</div>
+        <div class="price-strip-item"><span class="emoji">👨‍👩‍👧‍👦</span> Up to 4 children per account</div>
+        <div class="price-strip-item"><span class="emoji">♾️</span> Lifetime access — no expiry</div>
+        <div class="price-strip-item"><span class="emoji">🤖</span> Built-in AI maths tutor</div>
+    </div>
+
+    <!-- FEATURES -->
+    <div class="section" id="features">
+        <div class="section-title">Everything Your Child Needs to Excel</div>
+        <div class="section-sub">Four operations, four fun games, one powerful AI tutor — all in one place.</div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <img src="/static/images/screen-login.png" class="feature-img" alt="Child Login">
+                <div class="feature-body">
+                    <div class="feature-icon">🎮</div>
+                    <div class="feature-title">Fun Games That Teach Maths</div>
+                    <div class="feature-desc">Snake, Pac-Man, Breakout and Target Shoot — every correct answer powers up the game. Learning feels like playing.</div>
+                </div>
+            </div>
+            <div class="feature-card">
+                <img src="/static/images/screen-dashboard.png" class="feature-img" alt="Progress Tracking">
+                <div class="feature-body">
+                    <div class="feature-icon">📊</div>
+                    <div class="feature-title">Track Every Step Forward</div>
+                    <div class="feature-desc">Watch your child's progress across all four operations. See which tables they've mastered and where they need practice.</div>
+                </div>
+            </div>
+            <div class="feature-card">
+                <img src="/static/images/screen-quiz.png" class="feature-img" alt="Quizzes">
+                <div class="feature-body">
+                    <div class="feature-icon">✅</div>
+                    <div class="feature-title">Smart Quizzes That Adapt</div>
+                    <div class="feature-desc">Instant feedback on every answer. Quizzes adjust to your child's level — challenging enough to stretch them, easy enough to keep them going.</div>
+                </div>
+            </div>
+            <div class="feature-card">
+                <img src="/static/images/screen-games.png" class="feature-img" alt="Einstein AI Tutor">
+                <div class="feature-body">
+                    <div class="feature-icon">🤖</div>
+                    <div class="feature-title">Einstein AI Tutor</div>
+                    <div class="feature-desc">Stuck on a question? Our built-in AI tutor explains concepts step by step, in language your child actually understands.</div>
+                </div>
+            </div>
+            <div class="feature-card">
+                <img src="/static/images/screen-parent.png" class="feature-img" alt="Parent Dashboard">
+                <div class="feature-body">
+                    <div class="feature-icon">👨‍👩‍👧</div>
+                    <div class="feature-title">Parent Dashboard</div>
+                    <div class="feature-desc">See exactly how your child is doing. Spot the tables they struggle with. Get AI-powered advice on what to focus on next.</div>
+                </div>
+            </div>
+            <div class="feature-card">
+                <img src="/static/images/hero-kids.png" class="feature-img" alt="Certificates">
+                <div class="feature-body">
+                    <div class="feature-icon">🏆</div>
+                    <div class="feature-title">Certificates & Badges</div>
+                    <div class="feature-desc">Every milestone earns a badge. Master all your tables and earn a Gold Certificate to print and keep — a real achievement to be proud of.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOW IT WORKS -->
+    <div class="how-section" id="how-it-works">
+        <div class="section-title">How MathQuest Works</div>
+        <div class="section-sub">Up and running in minutes. Your child will be learning from the first login.</div>
+
+        <div class="how-steps">
+            <div class="how-step">
+                <div class="how-step-num">1</div>
+                <h3>Buy Access — £5</h3>
+                <p>One-time payment via Stripe. You'll receive your access code by email within seconds after purchase.</p>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">2</div>
+                <h3>Create Your Account</h3>
+                <p>Register with your access code, create a parent account and add up to 4 children with their own secure PINs.</p>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">3</div>
+                <h3>Your Child Logs In</h3>
+                <p>Each child enters their name and PIN — no passwords needed. They're straight into their own personal dashboard.</p>
+            </div>
+            <div class="how-step">
+                <div class="how-step-num">4</div>
+                <h3>Learn, Play & Master</h3>
+                <p>Work through tables, play games and earn badges. The AI tutor helps when they're stuck. You track progress from your dashboard.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENSHOTS -->
+    <div class="section" id="screenshots">
+        <div class="section-title">A Glimpse Inside MathQuest</div>
+        <div class="section-sub">Clean, bright and designed to keep children engaged — without the distractions.</div>
+
+        <div class="screenshots-grid">
+            <div class="screenshot-frame">
+                <img src="/static/images/screen-login.png" alt="Child Login Screen">
+                <div class="screenshot-label">Child Login — fun & simple</div>
+            </div>
+            <div class="screenshot-frame">
+                <img src="/static/images/screen-dashboard.png" alt="Student Dashboard">
+                <div class="screenshot-label">Student Dashboard — progress & games</div>
+            </div>
+            <div class="screenshot-frame">
+                <img src="/static/images/screen-quiz.png" alt="Times Tables Quiz">
+                <div class="screenshot-label">Colourful Quiz — instant feedback</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REVIEWS -->
+    <div class="reviews-bg" id="reviews">
+        <div class="section-title">What Parents Are Saying</div>
+        <div class="section-sub">Real feedback from families using MathQuest at home.</div>
+
+        <div class="reviews-grid">
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"My daughter used to dread her times tables homework. Now she asks to do MathQuest before dinner. The games are genuinely fun — she's learning without even realising it. Best £5 I've ever spent."</div>
+                <div class="review-author">
+                    <div class="review-avatar">SP</div>
+                    <div>
+                        <div class="review-name">Sarah P.</div>
+                        <div class="review-sub">Mum to Emma, age 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"The Einstein tutor is brilliant. When my son gets stuck, he asks Einstein instead of calling for me. It explains things in a way that actually makes sense to a 7-year-old. Genuinely impressive."</div>
+                <div class="review-author">
+                    <div class="review-avatar">DM</div>
+                    <div>
+                        <div class="review-name">David M.</div>
+                        <div class="review-sub">Dad to Oliver, age 7</div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"I have three kids and the one-time price for all of them is incredible. My 10-year-old is working through division, my 7-year-old is on addition — they're all on the same account. The parent dashboard shows me exactly where each one is."</div>
+                <div class="review-author">
+                    <div class="review-avatar">JL</div>
+                    <div>
+                        <div class="review-name">Jennifer L.</div>
+                        <div class="review-sub">Mum to three children, ages 7, 9 and 10</div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"The streak system is genius. My son is obsessed with keeping his streak alive — he's done 18 days in a row now. It builds a habit without any nagging from me. The fire badge makes him so proud."</div>
+                <div class="review-author">
+                    <div class="review-avatar">RT</div>
+                    <div>
+                        <div class="review-name">Rachel T.</div>
+                        <div class="review-sub">Mum to James, age 8</div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"My daughter passed her Year 4 multiplication check at school with flying colours — she'd been using MathQuest every evening for two months. She was so proud she printed her certificate and put it on her bedroom wall."</div>
+                <div class="review-author">
+                    <div class="review-avatar">AW</div>
+                    <div>
+                        <div class="review-name">Amanda W.</div>
+                        <div class="review-sub">Mum to Sophia, age 9</div>
+                    </div>
+                </div>
+            </div>
+            <div class="review-card">
+                <div class="review-stars">★★★★★</div>
+                <div class="review-text">"As a teacher, I'm fussy about educational apps. MathQuest is the best I've found for home use — the progression is logical, the difficulty ramps up properly, and the AI tutor gives genuine explanations rather than just answers."</div>
+                <div class="review-author">
+                    <div class="review-avatar">NB</div>
+                    <div>
+                        <div class="review-name">Nina B.</div>
+                        <div class="review-sub">Primary school teacher & mum to twins</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PARENT GATE -->
+    <div class="parent-gate">
+        <span>👨‍👩‍👧 Parents — get started in under 2 minutes</span>
+        <a href="/buy">Buy Access — £5 →</a>
+    </div>
+
+    <!-- FINAL CTA -->
+    <div class="cta-section">
+        <div class="cta-price">£5</div>
+        <div class="cta-price-note">one-time payment · lifetime access · up to 4 children</div>
+        <h2>Ready to Make Maths Click?</h2>
+        <p>Join the families already using MathQuest to build confident, capable young mathematicians.</p>
+        <a href="/buy" class="btn-buy-final">🛒 Get MathQuest Access — £5</a>
+    </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>MathQuest © 2026 · One payment, lifetime access · No subscription, no hidden fees</p>
+        <p style="margin-top:6px">Questions? Email us anytime..</p>
+    </footer>
+
+</body>
+</html>

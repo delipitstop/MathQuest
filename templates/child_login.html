@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Student Login - MathQuest{% endblock %}
+{% block body %}
+<div class="student-bg" style="min-height:100vh;display:flex;align-items:center;justify-content:center">
+    <div style="text-align:center;max-width:440px;width:90%;padding:20px">
+        <div style="font-size:80px;margin-bottom:8px">🎮</div>
+        <h1 style="font-size:40px;font-weight:900;color:white;margin-bottom:4px;text-shadow:0 2px 8px rgba(0,0,0,0.2)">MathQuest</h1>
+        <p style="color:rgba(255,255,255,0.8);margin-bottom:32px;font-size:18px">Ready to learn and play?</p>
+        
+        <div style="background:white;border-radius:24px;padding:36px;box-shadow:0 8px 32px rgba(0,0,0,0.2);animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1)">
+            <h2 style="font-size:22px;font-weight:800;color:#1E1B4B;margin-bottom:24px">👦 Log In</h2>
+            
+            {% if error %}
+            <div class="error-msg">{{ error }}</div>
+            {% endif %}
+            
+            <form method="POST">
+                <div class="form-group">
+                    <label style="text-align:left;display:block;font-weight:700;color:#1E1B4B;margin-bottom:8px">Your Name</label>
+                    <input type="text" name="name" placeholder="Enter your name" required
+                           style="width:100%;padding:14px 18px;border:3px solid #E5E7EB;border-radius:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:600">
+                </div>
+                <div class="form-group">
+                    <label style="text-align:left;display:block;font-weight:700;color:#1E1B4B;margin-bottom:8px">Your PIN</label>
+                    <input type="text" name="pin" placeholder="4-digit PIN" maxlength="4" pattern="[0-9]{4}" required
+                           style="width:100%;padding:14px 18px;border:3px solid #E5E7EB;border-radius:16px;font-family:'Nunito',sans-serif;font-size:16px;font-weight:600;text-align:center;font-size:24px;letter-spacing:8px">
+                </div>
+                <button type="submit" class="btn btn-purple btn-lg" style="width:100%;margin-top:8px">Let's Go! 🚀</button>
+            </form>
+        </div>
+        
+        <p style="margin-top:20px;color:rgba(255,255,255,0.6);font-size:14px">
+            👨‍👩‍👧 Parents <a href="/parent/login" style="color:white;font-weight:700">click here</a>
+        </p>
+    </div>
+</div>
+{% endblock %}

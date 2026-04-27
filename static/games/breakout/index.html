@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Math Breakout</title>
+    <link rel="stylesheet" href="styles.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet" />
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; }
+        #mathOverlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .math-card {
+            background: linear-gradient(135deg, #1a0a4e, #2d1b69);
+            border: 3px solid #A78BFA;
+            border-radius: 24px;
+            padding: 32px 40px;
+            text-align: center;
+            box-shadow: 0 0 80px rgba(167,139,250,0.5);
+            min-width: 340px;
+        }
+        .math-card h2 {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 0 0 6px 0;
+        }
+        .math-card .q-text {
+            color: #FBBF24;
+            font-size: 42px;
+            font-weight: 900;
+            margin: 0 0 8px 0;
+            text-shadow: 0 0 20px rgba(251,191,36,0.4);
+        }
+        .math-card .timer {
+            color: #A78BFA;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 14px;
+        }
+        .math-card input {
+            width: 140px;
+            padding: 12px;
+            font-size: 32px;
+            font-weight: 900;
+            text-align: center;
+            border: 3px solid #A78BFA;
+            border-radius: 14px;
+            background: rgba(255,255,255,0.07);
+            color: white;
+            outline: none;
+            font-family: 'Nunito', sans-serif;
+        }
+        .math-card input:focus { border-color: #FBBF24; }
+        .math-card button {
+            display: block;
+            margin: 14px auto 0;
+            padding: 10px 32px;
+            background: linear-gradient(135deg, #34D399, #2dd4a8);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            font-family: 'Nunito', sans-serif;
+        }
+        .math-card .feedback {
+            margin-top: 10px;
+            font-size: 18px;
+            font-weight: 800;
+            min-height: 26px;
+        }
+        .math-card .hint {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Math Overlay -->
+    <div id="mathOverlay">
+        <div class="math-card">
+            <h2>Answer to Smash the Brick!</h2>
+            <div class="q-text" id="mathQ">7 + 5 = ?</div>
+            <div class="timer">Time: <span id="mathTimer" style="color:#FBBF24">15s</span></div>
+            <input type="number" id="mathInput2" placeholder="?" autocomplete="off">
+            <button onclick="submitMathAnswer()">Smash Brick!</button>
+            <div class="feedback" id="mathFeedback"></div>
+            <div class="hint">Press ENTER to submit</div>
+        </div>
+    </div>
+
+    <header>
+        <h1 class="heading">🧮 Math Breakout</h1>
+        <button id="themeToggle" type="button" aria-label="Switch to dark mode" aria-pressed="false">🌙</button>
+    </header>
+
+    <main>
+        <article class="game-container">
+            <section class="game-info">
+                <h2>Math Breakout</h2>
+                <p>Answer maths questions to smash bricks! Solve the equation shown on each brick to destroy it. Answer fast to unlock <strong>Math Power</strong> mode!</p>
+            </section>
+            <canvas id="myCanvas" width="600" height="600"></canvas>
+            <section class="game-option">
+                <h3>🎮 Game Options:</h3>
+                <div class="speed-container">
+                    <label for="speed-slider">Ball Speed:</label>
+                    <input id="speed-slider" type="range" min="1" max="5" value="2.5" />
+                </div>
+                <div id="size-container">
+                    <label for="size-slider">Ball Size:</label>
+                    <input id="size-slider" type="range" min="3" max="30" />
+                </div>
+                <button id="pauseBtn">⏸️ Pause</button>
+            </section>
+            <div class="alert success">
+                <strong>🎉 YOU WIN! WELL DONE!</strong>
+                <button id="successBtn" class="close">Play Again</button>
+            </div>
+            <div class="alert failure">
+                <strong>💀 GAME OVER!</strong>
+                <button id="failureBtn" class="close">Try Again</button>
+            </div>
+        </article>
+    </main>
+
+    <footer>
+        <span>© MathQuest | Breakout Game — Answer maths to win!</span>
+    </footer>
+
+    <script src="utils/utilsCopyright.js"></script>
+    <script src="utils/utilsColor.js"></script>
+    <script src="scripts/config.js"></script>
+    <script src="scripts/rendering.js"></script>
+    <script src="scripts/controls.js"></script>
+    <script src="scripts/gameplay.js"></script>
+    <script src="script.js"></script>
+
+    <script>
+        // Enter key submits math answer
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && document.getElementById('mathOverlay').style.display === 'flex') {
+                e.preventDefault();
+                submitMathAnswer();
+            }
+        });
+    </script>
+</body>
+</html>

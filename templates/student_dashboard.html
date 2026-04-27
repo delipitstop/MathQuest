@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MathQuest</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Nunito', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        .student-nav { background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-radius: 0 0 24px 24px; }
+        .student-nav-logo { font-size: 26px; font-weight: 900; color: white; text-decoration: none; }
+        .streak-badge { background: #FBBF24; color: #1E1B4B; padding: 6px 16px; border-radius: 20px; font-weight: 800; font-size: 14px; transition: all 0.3s; }
+        .streak-badge.streak-active { background: linear-gradient(135deg,#F97316,#FBBF24); color: white; animation: pulse-fire 2s infinite; }
+        .streak-badge.streak-fire { background: linear-gradient(135deg,#DC2626,#F97316,#FBBF24); color: white; animation: rainbow-fire 2s infinite; box-shadow: 0 0 20px rgba(251,191,36,0.5); }
+        @keyframes pulse-fire { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+        @keyframes rainbow-fire { 0%,100%{box-shadow:0 0 20px rgba(251,191,36,0.6);transform:scale(1)} 50%{box-shadow:0 0 30px rgba(249,115,22,0.8);transform:scale(1.07)} }
+        
+        /* Futuristic 3D hero cards */
+        .learn-hero { background: white; border-radius: 28px; padding: 36px; margin-bottom: 28px; text-align: center; box-shadow: 0 12px 48px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); text-decoration: none; display: block; color: inherit; position: relative; overflow: hidden; transform-style: preserve-3d; }
+        .learn-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #A78BFA, #34D399, #FBBF24, #F97316); }
+        .learn-hero:hover { transform: translateY(-8px) scale(1.02) rotateX(2deg); box-shadow: 0 24px 64px rgba(0,0,0,0.22), 0 0 40px rgba(167,139,250,0.15); }
+        
+        /* 3D nav */
+        .student-nav { background: rgba(255,255,255,0.12); backdrop-filter: blur(16px); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; border-radius: 0 0 24px 24px; border-bottom: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 30px rgba(0,0,0,0.15); }
+        .student-nav-logo { font-size: 26px; font-weight: 900; color: white; text-decoration: none; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        
+        /* Neon quick links */
+        .quick-link { background: white; border-radius: 20px; padding: 24px 16px; text-align: center; text-decoration: none; color: inherit; transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: block; transform-style: preserve-3d; }
+        .quick-link:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 12px 36px rgba(102,126,234,0.3); }
+        .quick-link:active { transform: translateY(-2px) scale(0.98); }
+        
+        /* Glassmorphism badge */
+        .badge-item.earned { border: 2px solid #FBBF24; box-shadow: 0 0 16px rgba(251,191,36,0.3); }
+        
+        /* Neon glow on exam hero */
+        .exam-glow:hover { box-shadow: 0 0 40px rgba(124,58,237,0.5), 0 20px 60px rgba(0,0,0,0.2); }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.1); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg,#667eea,#764ba2); border-radius: 4px; }
+        .container { max-width: 900px; margin: 0 auto; padding: 32px 20px; }
+        .welcome { text-align: center; color: white; margin-bottom: 36px; }
+        .welcome h1 { font-size: 38px; font-weight: 900; margin-bottom: 4px; }
+        .welcome p { font-size: 18px; opacity: 0.9; }
+        .learn-hero { background: white; border-radius: 28px; padding: 36px; margin-bottom: 28px; text-align: center; box-shadow: 0 12px 48px rgba(0,0,0,0.15); cursor: pointer; transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1); text-decoration: none; display: block; color: inherit; position: relative; overflow: hidden; }
+        .learn-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px; background: linear-gradient(90deg, #A78BFA, #34D399, #FBBF24, #F97316); }
+        .learn-hero:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+        .learn-hero-emoji { font-size: 72px; margin-bottom: 12px; }
+        .learn-hero h2 { font-size: 30px; font-weight: 900; color: #1E1B4B; margin-bottom: 8px; }
+        .learn-hero p { font-size: 17px; color: #6B7280; margin-bottom: 20px; }
+        .progress-mini { background: #F3F4F6; border-radius: 50px; height: 16px; overflow: hidden; margin-bottom: 12px; }
+        .progress-mini-fill { height: 100%; background: linear-gradient(90deg, #34D399, #A78BFA); border-radius: 50px; transition: width 1s ease; }
+        .progress-label { font-size: 14px; font-weight: 700; color: #6B7280; }
+        .next-table { display: inline-block; background: #FEF3C7; color: #92400E; padding: 6px 18px; border-radius: 20px; font-size: 14px; font-weight: 800; }
+        .tables-preview { margin-top: 20px; }
+        .tables-preview-title { font-size: 16px; font-weight: 800; color: white; margin-bottom: 12px; }
+        .tables-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+        .mini-table { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 900; }
+        .mini-table.passed { background: #34D399; color: white; }
+        .mini-table.current { background: #FBBF24; color: #1E1B4B; }
+        .mini-table.locked { background: rgba(255,255,255,0.3); color: rgba(255,255,255,0.6); }
+        .quick-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .quick-link { background: white; border-radius: 20px; padding: 24px 16px; text-align: center; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: block; }
+        .quick-link:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.15); }
+        .quick-link-emoji { font-size: 48px; margin-bottom: 8px; }
+        .quick-link-name { font-size: 16px; font-weight: 800; color: #1E1B4B; }
+        .quick-link-desc { font-size: 12px; color: #6B7280; margin-top: 4px; }
+        .section-title { color: white; font-size: 24px; font-weight: 800; margin-bottom: 16px; text-align: center; }
+        .games-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; margin-bottom: 28px; }
+        .game-card { background: white; border-radius: 20px; padding: 20px; text-align: center; text-decoration: none; color: inherit; transition: all 0.2s; box-shadow: 0 4px 16px rgba(0,0,0,0.1); display: block; }
+        .game-card:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.15); }
+        .game-card.locked { opacity: 0.45; cursor: not-allowed; }
+        .game-emoji { font-size: 48px; margin-bottom: 8px; }
+        .game-name { font-size: 15px; font-weight: 800; color: #1E1B4B; }
+        .game-desc { font-size: 12px; color: #6B7280; margin-top: 4px; }
+        .badges-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; }
+        .badge-item { background: white; border-radius: 16px; padding: 16px 12px; text-align: center; width: 100px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .badge-item.earned { border: 2px solid #FBBF24; }
+        .badge-item.locked { opacity: 0.35; filter: grayscale(1); }
+        .badge-emoji { font-size: 40px; margin-bottom: 4px; }
+        .badge-name { font-size: 11px; font-weight: 800; color: #1E1B4B; }
+        @media (max-width: 600px) {
+            .welcome h1 { font-size: 28px; }
+            .learn-hero h2 { font-size: 24px; }
+            .quick-links { grid-template-columns: repeat(2, 1fr); }
+        }
+    </style>
+</head>
+<body>
+    <div class="student-nav">
+        <a href="/student/dashboard" class="student-nav-logo">MathQuest</a>
+        <div class="student-nav-right">
+            <div class="streak-badge {% if day_streak >= 3 %}streak-fire{% elif day_streak >= 1 %}streak-active{% endif %}">🔥 {{ day_streak }} Day Streak</div>
+            <a href="/child/logout" style="background:rgba(255,255,255,0.2);color:white;padding:8px 16px;border-radius:40px;font-weight:700;text-decoration:none;font-size:14px">Logout</a>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="welcome">
+            <h1>Hey, {{ child_name }}! 👋</h1>
+            <p>Ready to learn and play today?</p>
+        </div>
+        
+        {# Count passed tables and find next unlocked table #}
+        {% set ns = namespace(passed_count=0, next_table=1) %}
+        {% for i in range(1, 16) %}
+            {% if all_tables[i].quiz_score >= 80 %}{% set ns.passed_count = ns.passed_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for i in range(1, 16) %}
+            {% if ns.next_table == 1 and all_tables[i].quiz_score < 80 %}{% set ns.next_table = i %}{% endif %}
+        {% endfor %}
+        
+        <a href="/learn" class="learn-hero">
+            <div class="learn-hero-emoji">📚</div>
+            <h2>Learn Times Tables</h2>
+            <p>Master each table from 1× to 15×. Pass the quiz to unlock the next one!</p>
+            
+            <div class="progress-mini">
+                <div class="progress-mini-fill" style="width:{{ (ns.passed_count / 15 * 100)|round|int }}%"></div>
+            </div>
+            <div class="progress-label">{{ ns.passed_count }} of 15 tables passed</div>
+            
+            {% if ns.passed_count < 15 %}
+            <div style="margin-top:12px">
+                <span class="next-table">▶ Next: {{ ns.next_table }}× Table</span>
+            </div>
+            {% else %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#D1FAE5;color:#065F46">🌟 All Tables Complete!</span>
+            </div>
+            {% endif %}
+            
+            <div class="tables-preview">
+                <div class="tables-preview-title">Your Progress</div>
+                <div class="tables-row">
+                    {% for i in range(1, 16) %}
+                        {% set tp = all_tables[i] %}
+                        {% if tp.quiz_score >= 80 %}
+                            <div class="mini-table passed" title="{{ i }}x Passed">{{ i }}</div>
+                        {% elif (i == 1) or (all_tables[i-1].quiz_score >= 80) %}
+                            <div class="mini-table current" title="{{ i }}x In Progress">{{ i }}</div>
+                        {% else %}
+                            <div class="mini-table locked" title="{{ i }}x Locked">🔒</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+
+        {# Division Tables Hero #}
+        {% set ns2 = namespace(div_passed_count=0, div_next_table=1) %}
+        {% for i in range(1, 16) %}
+            {% if all_division[i].quiz_score >= 80 %}{% set ns2.div_passed_count = ns2.div_passed_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for i in range(1, 16) %}
+            {% if ns2.div_next_table == 1 and all_division[i].quiz_score < 80 %}{% set ns2.div_next_table = i %}{% endif %}
+        {% endfor %}
+
+        <a href="/learn_div" class="learn-hero" style="background:linear-gradient(135deg,#0f766e 0%,#065f46 100%);cursor:pointer;text-decoration:none">
+            <div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#2dd4bf,#34D399,#FBBF24,#F97316)"></div>
+            <div class="learn-hero-emoji">➗</div>
+            <h2 style="color:white">Division Tables</h2>
+            <p style="color:rgba(255,255,255,0.85)">Learn to divide! Master each table from 1÷ to 15÷.</p>
+
+            <div class="progress-mini">
+                <div class="progress-mini-fill" style="width:{{ (ns2.div_passed_count / 15 * 100)|round|int }}%;background:linear-gradient(90deg,#2dd4bf,#34D399)"></div>
+            </div>
+            <div class="progress-label">{{ ns2.div_passed_count }} of 15 division tables passed</div>
+
+            {% if ns2.div_passed_count < 15 %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#FEF3C7;color:#92400E">▶ Next: {{ ns2.div_next_table }}÷ Table</span>
+            </div>
+            {% else %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#D1FAE5;color:#065F46">🌟 All Division Tables Complete!</span>
+            </div>
+            {% endif %}
+
+            <div class="tables-preview">
+                <div class="tables-preview-title" style="color:rgba(255,255,255,0.85)">Your Progress</div>
+                <div class="tables-row">
+                    {% for i in range(1, 16) %}
+                        {% set tp = all_division[i] %}
+                        {% if tp.quiz_score >= 80 %}
+                            <div class="mini-table passed" title="{{ i }}÷ Passed" style="background:#34D399;color:white">{{ i }}</div>
+                        {% elif (i == 1) or (all_division[i-1].quiz_score >= 80) %}
+                            <div class="mini-table current" title="{{ i }}÷ In Progress" style="background:#FBBF24;color:#1E1B4B">{{ i }}</div>
+                        {% else %}
+                            <div class="mini-table locked" title="{{ i }}÷ Locked" style="background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.5)">🔒</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+
+        {# Addition Tables Hero #}
+        {% set ns3 = namespace(add_passed_count=0, add_next_table=1) %}
+        {% for i in range(1, 16) %}
+            {% if all_addition[i].quiz_score >= 80 %}{% set ns3.add_passed_count = ns3.add_passed_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for i in range(1, 16) %}
+            {% if ns3.add_next_table == 1 and all_addition[i].quiz_score < 80 %}{% set ns3.add_next_table = i %}{% endif %}
+        {% endfor %}
+
+        <a href="/learn_add" class="learn-hero" style="background:linear-gradient(135deg,#D97706 0%,#B45309 100%);cursor:pointer;text-decoration:none">
+            <div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#FBBF24,#F97316,#F59E0B,#D97706)"></div>
+            <div class="learn-hero-emoji">➕</div>
+            <h2 style="color:white">Addition Tables</h2>
+            <p style="color:rgba(255,255,255,0.85)">Learn to add! Master each table from 1+ to 15+.</p>
+
+            <div class="progress-mini">
+                <div class="progress-mini-fill" style="width:{{ (ns3.add_passed_count / 15 * 100)|round|int }}%;background:linear-gradient(90deg,#FBBF24,#F97316)"></div>
+            </div>
+            <div class="progress-label">{{ ns3.add_passed_count }} of 15 addition tables passed</div>
+
+            {% if ns3.add_passed_count < 15 %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#FEF3C7;color:#92400E">▶ Next: {{ ns3.add_next_table }}+ Table</span>
+            </div>
+            {% else %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#D1FAE5;color:#065F46">🌟 All Addition Tables Complete!</span>
+            </div>
+            {% endif %}
+
+            <div class="tables-preview">
+                <div class="tables-preview-title" style="color:rgba(255,255,255,0.85)">Your Progress</div>
+                <div class="tables-row">
+                    {% for i in range(1, 16) %}
+                        {% set tp = all_addition[i] %}
+                        {% if tp.quiz_score >= 80 %}
+                            <div class="mini-table passed" title="{{ i }}+ Passed" style="background:#34D399;color:white">{{ i }}</div>
+                        {% elif (i == 1) or (all_addition[i-1].quiz_score >= 80) %}
+                            <div class="mini-table current" title="{{ i }}+ In Progress" style="background:#FBBF24;color:#1E1B4B">{{ i }}</div>
+                        {% else %}
+                            <div class="mini-table locked" title="{{ i }}+ Locked" style="background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.5)">🔒</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+
+        {# Subtraction Tables Hero #}
+        {% set ns4 = namespace(sub_passed_count=0, sub_next_table=1) %}
+        {% for i in range(1, 16) %}
+            {% if all_subtraction[i].quiz_score >= 80 %}{% set ns4.sub_passed_count = ns4.sub_passed_count + 1 %}{% endif %}
+        {% endfor %}
+        {% for i in range(1, 16) %}
+            {% if ns4.sub_next_table == 1 and all_subtraction[i].quiz_score < 80 %}{% set ns4.sub_next_table = i %}{% endif %}
+        {% endfor %}
+
+        <a href="/learn_sub" class="learn-hero" style="background:linear-gradient(135deg,#BE123C 0%,#9B1C1C 100%);cursor:pointer;text-decoration:none">
+            <div style="position:absolute;top:0;left:0;right:0;height:6px;background:linear-gradient(90deg,#F87171,#BE123C,#EF4444,#DC2626)"></div>
+            <div class="learn-hero-emoji">➖</div>
+            <h2 style="color:white">Subtraction Tables</h2>
+            <p style="color:rgba(255,255,255,0.85)">Learn to subtract! Master each table from 1- to 15-.</p>
+
+            <div class="progress-mini">
+                <div class="progress-mini-fill" style="width:{{ (ns4.sub_passed_count / 15 * 100)|round|int }}%;background:linear-gradient(90deg,#F87171,#BE123C)"></div>
+            </div>
+            <div class="progress-label">{{ ns4.sub_passed_count }} of 15 subtraction tables passed</div>
+
+            {% if ns4.sub_passed_count < 15 %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#FEE2E2;color:#991B1B">▶ Next: {{ ns4.sub_next_table }}- Table</span>
+            </div>
+            {% else %}
+            <div style="margin-top:12px">
+                <span class="next-table" style="background:#D1FAE5;color:#065F46">🌟 All Subtraction Tables Complete!</span>
+            </div>
+            {% endif %}
+
+            <div class="tables-preview">
+                <div class="tables-preview-title" style="color:rgba(255,255,255,0.85)">Your Progress</div>
+                <div class="tables-row">
+                    {% for i in range(1, 16) %}
+                        {% set tp = all_subtraction[i] %}
+                        {% if tp.quiz_score >= 80 %}
+                            <div class="mini-table passed" title="{{ i }}- Passed" style="background:#34D399;color:white">{{ i }}</div>
+                        {% elif (i == 1) or (all_subtraction[i-1].quiz_score >= 80) %}
+                            <div class="mini-table current" title="{{ i }}- In Progress" style="background:#F87171;color:white">{{ i }}</div>
+                        {% else %}
+                            <div class="mini-table locked" title="{{ i }}- Locked" style="background:rgba(255,255,255,0.2);color:rgba(255,255,255,0.5)">🔒</div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </a>
+
+        {% if exam_eligible %}
+        {% if exam_passed %}
+        <a href="/exam" class="learn-hero exam-glow" style="background:linear-gradient(135deg,#7C3AED 0%,#A78BFA 100%);cursor:pointer;text-decoration:none">
+            <div style="position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#FBBF24,#F59E0B,#F97316,#EF4444,#EC4899)"></div>
+            <div class="learn-hero-emoji">🏆</div>
+            <h2 style="color:white">Exam Passed!</h2>
+            <p style="color:rgba(255,255,255,0.85)">You scored {{ exam_result.percentage }}%! View your certificate or retake the exam.</p>
+            <div style="margin-top:16px">
+                <span style="background:#FBBF24;color:#78350F;padding:10px 24px;border-radius:50px;font-weight:900;font-size:18px">View Certificate / Retake</span>
+            </div>
+        </a>
+        {% else %}
+        <a href="/exam" class="learn-hero" style="background:linear-gradient(135deg,#7C3AED 0%,#A78BFA 100%);cursor:pointer;text-decoration:none">
+            <div style="position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#FBBF24,#F59E0B,#F97316,#EF4444,#EC4899)"></div>
+            <div class="learn-hero-emoji">📝</div>
+            <h2 style="color:white">Take the Final Exam!</h2>
+            <p style="color:rgba(255,255,255,0.85)">35 mixed questions from all 4 operations. 80% to pass and earn your certificate!</p>
+            <div style="margin-top:16px">
+                <span style="background:#34D399;color:white;padding:10px 24px;border-radius:50px;font-weight:900;font-size:18px">Start Exam →</span>
+            </div>
+        </a>
+        {% endif %}
+        {% else %}
+        {# Show exam goal progress even when not yet eligible #}
+        {% set total_passed = passed_count + div_passed_count + add_passed_count + sub_passed_count %}
+        {% set total_needed = 60 %}
+        {% set exam_pct = (total_passed / total_needed * 100)|round|int %}
+        <div class="learn-hero" style="background:linear-gradient(135deg,#4C1D95 0%,#7C3AED 100%);cursor:default">
+            <div style="position:absolute;top:0;left:0;right:0;height:8px;background:linear-gradient(90deg,#FBBF24,#F59E0B,#F97316,#EF4444,#EC4899)"></div>
+            <div class="learn-hero-emoji">🏆</div>
+            <h2 style="color:white">Final Exam Goal</h2>
+            <p style="color:rgba(255,255,255,0.85)">Pass all 60 tables across all 4 operations to unlock the exam!</p>
+            <div style="margin-top:12px">
+                <div style="background:rgba(255,255,255,0.15);border-radius:50px;height:16px;overflow:hidden">
+                    <div style="width:{{ exam_pct }}%;height:100%;background:linear-gradient(90deg,#FBBF24,#F59E0B);border-radius:50px;transition:width 1s"></div>
+                </div>
+            </div>
+            <p style="color:rgba(255,255,255,0.85);margin-top:10px;font-size:15px;font-weight:700">{{ total_passed }} / {{ total_needed }} tables passed ({{ exam_pct }}%)</p>
+            <div style="margin-top:10px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+                <span style="background:rgba(139,92,246,0.3);color:#C4B5FD;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">✖️ {{ passed_count }}/15</span>
+                <span style="background:rgba(20,184,166,0.3);color:#5EEAD4;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">➗ {{ div_passed_count }}/15</span>
+                <span style="background:rgba(245,158,11,0.3);color:#FCD34D;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">➕ {{ add_passed_count }}/15</span>
+                <span style="background:rgba(220,38,38,0.3);color:#FCA5A5;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700">➖ {{ sub_passed_count }}/15</span>
+            </div>
+            <div style="margin-top:12px">
+                <span style="background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.6);padding:8px 20px;border-radius:50px;font-size:13px;font-weight:700">🔒 Pass all tables to unlock exam</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Links -->
+        <div class="quick-links">
+            <a href="/learn" class="quick-link">
+                <div class="quick-link-emoji">✨</div>
+                <div class="quick-link-name">Times Tables</div>
+                <div class="quick-link-desc">Learn 1× to 15×</div>
+            </a>
+            <a href="/learn_div" class="quick-link">
+                <div class="quick-link-emoji">➗</div>
+                <div class="quick-link-name">Division</div>
+                <div class="quick-link-desc">Learn 1÷ to 15÷</div>
+            </a>
+            <a href="/learn_add" class="quick-link">
+                <div class="quick-link-emoji">➕</div>
+                <div class="quick-link-name">Addition</div>
+                <div class="quick-link-desc">Learn 1+ to 15+</div>
+            </a>
+            <a href="/learn_sub" class="quick-link">
+                <div class="quick-link-emoji">➖</div>
+                <div class="quick-link-name">Subtraction</div>
+                <div class="quick-link-desc">Learn 1- to 15-</div>
+            </a>
+        </div>
+        <div class="quick-links" style="margin-top:0">
+            <a href="/student/dashboard" class="quick-link" style="opacity:0.4;cursor:not-allowed">
+                <div class="quick-link-emoji">🏆</div>
+                <div class="quick-link-name">Achievements</div>
+                <div class="quick-link-desc">View badges</div>
+            </a>
+        </div>
+        
+        <!-- Games Section -->
+        <div class="section-title">🎮 Play Games</div>
+        <div class="games-grid">
+            <a href="/game/mathsnake" class="game-card">
+                <div class="game-emoji">🐍</div>
+                <div class="game-name">Math Snake</div>
+                <div class="game-desc">Snake meets times tables!</div>
+            </a>
+            <a href="/game/targetshoot" class="game-card">
+                <div class="game-emoji">🎯</div>
+                <div class="game-name">Target Shoot</div>
+                <div class="game-desc">Speed & accuracy!</div>
+            </a>
+            <a href="/game/pacman" class="game-card">
+                <div class="game-emoji">🟡</div>
+                <div class="game-name">Pac-Man</div>
+                <div class="game-desc">Classic arcade fun!</div>
+            </a>
+            <a href="/game/breakout" class="game-card">
+                <div class="game-emoji">🧱</div>
+            </a>
+        </div>
+        
+        <!-- Achievements -->
+        <div class="section-title" style="margin-top:12px">🏆 My Awards</div>
+        <div class="badges-grid">
+            {% set badges = [
+                {'emoji':'🌟','name':'First Steps','key':'first_lesson'},
+                {'emoji':'📝','name':'Quiz Taker','key':'first_quiz'},
+                {'emoji':'💯','name':'Perfect Score','key':'perfect_score'},
+                {'emoji':'🏅','name':'Quiz Master','key':'quiz_master'},
+                {'emoji':'🔥','name':'3 Day Streak','key':'streak_3'},
+                {'emoji':'📚','name':'Bookworm','key':'bookworm'},
+                {'emoji':'🚀','name':'Speed Demon','key':'speed_demon'},
+                {'emoji':'🏆','name':'Math Champion','key':'math_champion'}
+            ] %}
+            {% set earned_badges = achievements|map(attribute='badge')|list %}
+            {% for badge in badges %}
+            <div class="badge-item {% if badge.key in earned_badges %}earned{% else %}locked{% endif %}">
+                <div class="badge-emoji">{{ badge.emoji }}</div>
+                <div class="badge-name">{{ badge.name }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
