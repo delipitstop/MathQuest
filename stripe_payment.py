@@ -76,7 +76,7 @@ def send_access_code_email(email: str, access_code: str) -> bool:
             import resend
             resend.api_key = resend_key
             params = {
-                "from": "MathQuest <hello@mathquest.app>",
+                "from": "MathQuest <resend@resend.dev>",
                 "to": [email],
                 "subject": "Your MathQuest Access Code",
                 "html": _build_html(access_code),
