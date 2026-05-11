@@ -2174,7 +2174,7 @@ def stripe_webhook():
         return jsonify({'error': 'Stripe not configured'}), 400
     
     payload = request.get_data()
-    sig = request.headers.get('Stripe-Signature', '')
+    sig = request.headers.get('stripe-signature', request.headers.get('Stripe-Signature', ''))
     
     try:
         event = stripe_payment.construct_webhook_event(payload, sig)
