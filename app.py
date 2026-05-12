@@ -2,7 +2,8 @@
 MathQuest - Educational Math Platform for Kids
 Flask Backend - MVP Version
 """
-import sqlite3
+import psycopg2
+from psycopg2.extras import RealDictCursor
 import hashlib
 import uuid
 import random
@@ -29,7 +30,7 @@ except ImportError:
 
 app = Flask(__name__)
 app.secret_key = 'mathquest-secret-key-2026'
-DATABASE = 'mathquest.db'
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
 
 # ============ ACCESS CODE CONFIG ============
 # One-time purchase access codes.
@@ -43,119 +44,25 @@ ACCESS_CODE_PRICE = '£5'
 
 # ============ DATABASE SETUP ============
 def init_db():
-    conn = sqlite3.connect(DATABASE)
-    c = conn.cursor()
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS parents (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT NOT NULL,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS children (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            parent_id INTEGER NOT NULL,
-            name TEXT NOT NULL,
-            pin_hash TEXT NOT NULL,
-            avatar TEXT DEFAULT 'lion',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES parents(id)
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS progress (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            child_id INTEGER NOT NULL,
-            topic TEXT NOT NULL,
-            questions_completed INTEGER DEFAULT 0,
-            quiz_score INTEGER DEFAULT 0,
-            quiz_taken INTEGER DEFAULT 0,
-            last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (child_id) REFERENCES children(id),
-            UNIQUE(child_id, topic)
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS quiz_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            child_id INTEGER NOT NULL,
-            topic TEXT NOT NULL,
-            score INTEGER NOT NULL,
-            total INTEGER NOT NULL,
-            taken_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (child_id) REFERENCES children(id)
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS achievements (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            child_id INTEGER NOT NULL,
-            badge TEXT NOT NULL,
-            earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (child_id) REFERENCES children(id)
-        )
-    ''')
+    # Tables created manually in Neon PostgreSQL — no-op here
+    pass
 
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS exam_results (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            child_id INTEGER NOT NULL,
-            score INTEGER NOT NULL,
-            total INTEGER NOT NULL,
-            percentage INTEGER NOT NULL,
-            passed INTEGER NOT NULL,
-            answers_json TEXT,
-            taken_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (child_id) REFERENCES children(id)
-        )
-    ''')
-
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS access_codes (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            code TEXT UNIQUE NOT NULL,
-            used INTEGER DEFAULT 0,
-            used_by_parent_id INTEGER,
-            used_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-
-    # Add has_access and access_code to parents if they don't exist
-    try:
-        c.execute("ALTER TABLE parents ADD COLUMN has_access INTEGER DEFAULT 0")
-    except:
-        pass
-    try:
-        c.execute("ALTER TABLE parents ADD COLUMN access_code TEXT")
-    except:
-        pass
-
-    conn.commit()
-    conn.close()
-
-init_db()
+# init_db() intentionally not called — tables exist in Neon
 
 # ============ HELPERS ============
 def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def get_db():
-    conn = sqlite3.connect(DATABASE)
-    conn.row_factory = sqlite3.Row
+    if not DATABASE_URL:
+        raise RuntimeError('DATABASE_URL environment variable not set')
+    conn = psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
     return conn
 
 def get_child_progress(child_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM progress WHERE child_id = ?', (child_id,))
+    c.execute('SELECT * FROM progress WHERE child_id = %s', (child_id,))
     rows = c.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -163,7 +70,7 @@ def get_child_progress(child_id):
 def get_child_achievements(child_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM achievements WHERE child_id = ?', (child_id,))
+    c.execute('SELECT * FROM achievements WHERE child_id = %s', (child_id,))
     rows = c.fetchall()
     conn.close()
     return [dict(row) for row in rows]
@@ -171,9 +78,9 @@ def get_child_achievements(child_id):
 def award_badge(child_id, badge):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT id FROM achievements WHERE child_id = ? AND badge = ?', (child_id, badge))
+    c.execute('SELECT id FROM achievements WHERE child_id = %s AND badge = %s', (child_id, badge))
     if not c.fetchone():
-        c.execute('INSERT INTO achievements (child_id, badge) VALUES (?, ?)', (child_id, badge))
+        c.execute('INSERT INTO achievements (child_id, badge) VALUES (%s, %s)', (child_id, badge))
         conn.commit()
     conn.close()
     conn.close()
@@ -196,7 +103,7 @@ def is_valid_access_code(code):
     # Check DB for codes registered by Stripe webhook (must not be used yet)
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT id FROM access_codes WHERE code = ? AND used = 0', (code,))
+    c.execute('SELECT id FROM access_codes WHERE code = %s AND used = 0', (code,))
     result = c.fetchone()
     conn.close()
     return result is not None
@@ -214,22 +121,22 @@ def use_access_code(code):
     # Hardcoded codes (MQ2026HOME etc.) — never expire, track in DB
     if code in VALID_ACCESS_CODES:
         # Check if already used
-        c.execute('SELECT id FROM access_codes WHERE code = ? AND used = 1', (code,))
+        c.execute('SELECT id FROM access_codes WHERE code = %s AND used = 1', (code,))
         if c.fetchone():
             conn.close()
             return False  # already used
         # Register and mark as used
-        c.execute('INSERT OR REPLACE INTO access_codes (code, used) VALUES (?, 1)', (code,))
+        c.execute('INSERT OR REPLACE INTO access_codes (code, used) VALUES (%s, 1)', (code,))
         conn.commit()
         conn.close()
         return True
     
     # DB codes (from Stripe) — mark as used if not already used
-    c.execute('SELECT id FROM access_codes WHERE code = ? AND used = 1', (code,))
+    c.execute('SELECT id FROM access_codes WHERE code = %s AND used = 1', (code,))
     if c.fetchone():
         conn.close()
         return False  # already used
-    c.execute('UPDATE access_codes SET used = 1 WHERE code = ?', (code,))
+    c.execute('UPDATE access_codes SET used = 1 WHERE code = %s', (code,))
     conn.commit()
     conn.close()
     return True
@@ -240,7 +147,7 @@ def is_access_code_used(code):
     code = code.strip().upper()
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT id FROM access_codes WHERE code = ? AND used = 1', (code,))
+    c.execute('SELECT id FROM access_codes WHERE code = %s AND used = 1', (code,))
     result = c.fetchone()
     conn.close()
     return result is not None
@@ -250,7 +157,7 @@ def get_table_progress(child_id, table_num):
     conn = get_db()
     c = conn.cursor()
     topic = f'table_{table_num}'
-    c.execute('SELECT * FROM progress WHERE child_id = ? AND topic = ?', (child_id, topic))
+    c.execute('SELECT * FROM progress WHERE child_id = %s AND topic = %s', (child_id, topic))
     row = c.fetchone()
     conn.close()
     if not row:
@@ -291,7 +198,7 @@ def update_streak(child_id):
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT day_streak, last_active_date FROM children WHERE id = ?', (child_id,))
+    c.execute('SELECT day_streak, last_active_date FROM children WHERE id = %s', (child_id,))
     row = c.fetchone()
     if not row:
         conn.close()
@@ -311,7 +218,7 @@ def update_streak(child_id):
         # Either first time or missed yesterday — start fresh at 1
         new_streak = 1
     
-    c.execute('UPDATE children SET day_streak = ?, last_active_date = ? WHERE id = ?',
+    c.execute('UPDATE children SET day_streak = %s, last_active_date = %s WHERE id = %s',
                (new_streak, today, child_id))
     conn.commit()
     conn.close()
@@ -349,7 +256,7 @@ def check_exam_eligible(child_id):
 def get_exam_result(child_id):
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM exam_results WHERE child_id = ? ORDER BY taken_at DESC LIMIT 1', (child_id,))
+    c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 1', (child_id,))
     row = c.fetchone()
     conn.close()
     if not row:
@@ -362,10 +269,11 @@ def save_exam_result(child_id, score, total, passed, answers_json):
     pct = int(score / total * 100)
     c.execute('''
         INSERT INTO exam_results (child_id, score, total, percentage, passed, answers_json)
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        RETURNING id
     ''', (child_id, score, total, pct, passed, answers_json))
     conn.commit()
-    exam_id = c.lastrowid
+    exam_id = c.fetchone()[0]
     conn.close()
     if passed:
         award_badge(child_id, 'exam_passed')
@@ -706,7 +614,7 @@ def get_division_progress(child_id, table_num):
     conn = get_db()
     c = conn.cursor()
     topic = f'div_table_{table_num}'
-    c.execute('SELECT * FROM progress WHERE child_id = ? AND topic = ?', (child_id, topic))
+    c.execute('SELECT * FROM progress WHERE child_id = %s AND topic = %s', (child_id, topic))
     row = c.fetchone()
     conn.close()
     if not row:
@@ -741,7 +649,7 @@ def get_addition_progress(child_id, table_num):
     conn = get_db()
     c = conn.cursor()
     topic = f'add_table_{table_num}'
-    c.execute('SELECT * FROM progress WHERE child_id = ? AND topic = ?', (child_id, topic))
+    c.execute('SELECT * FROM progress WHERE child_id = %s AND topic = %s', (child_id, topic))
     row = c.fetchone()
     conn.close()
     if not row:
@@ -774,7 +682,7 @@ def get_subtraction_progress(child_id, table_num):
     conn = get_db()
     c = conn.cursor()
     topic = f'sub_table_{table_num}'
-    c.execute('SELECT * FROM progress WHERE child_id = ? AND topic = ?', (child_id, topic))
+    c.execute('SELECT * FROM progress WHERE child_id = %s AND topic = %s', (child_id, topic))
     row = c.fetchone()
     conn.close()
     if not row:
@@ -851,16 +759,17 @@ def parent_register():
         
         conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT id FROM parents WHERE email = ?', (email,))
+        c.execute('SELECT id FROM parents WHERE email = %s', (email,))
         if c.fetchone():
             conn.close()
             return render_template('parent_register.html', error='Email already registered')
         
         c.execute('''INSERT INTO parents (name, email, password_hash, has_access, access_code) 
-                     VALUES (?, ?, ?, 1, ?)''',
+                     VALUES (%s, %s, %s, 1, %s)
+                     RETURNING id''',
                   (name, email, hash_password(password), validated_code))
         conn.commit()
-        parent_id = c.lastrowid
+        parent_id = c.fetchone()[0]
         
         # Mark access code as used
         use_access_code(validated_code)
@@ -882,7 +791,7 @@ def parent_login():
         
         conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT * FROM parents WHERE email = ? AND password_hash = ?',
+        c.execute('SELECT * FROM parents WHERE email = %s AND password_hash = %s',
                   (email, hash_password(password)))
         parent = c.fetchone()
         conn.close()
@@ -912,7 +821,7 @@ def parent_dashboard():
     parent_id = session['parent_id']
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM children WHERE parent_id = ?', (parent_id,))
+    c.execute('SELECT * FROM children WHERE parent_id = %s', (parent_id,))
     children = c.fetchall()
     
     children_data = []
@@ -944,13 +853,13 @@ def parent_dashboard():
         child_dict['struggles'] = struggles
         
         # Quiz results history
-        c.execute('SELECT * FROM quiz_results WHERE child_id = ? ORDER BY taken_at DESC LIMIT 20',
+        c.execute('SELECT * FROM quiz_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 20',
                  (child['id'],))
         child_dict['quiz_results'] = [dict(r) for r in c.fetchall()]
         child_dict['progress_dict'] = {p['topic']: p for p in child_dict['progress']}
         
         # Best exam result (for certificate)
-        c.execute('SELECT * FROM exam_results WHERE child_id = ? ORDER BY percentage DESC LIMIT 1',
+        c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY percentage DESC LIMIT 1',
                  (child['id'],))
         exam = c.fetchone()
         child_dict['exam_result'] = dict(exam) if exam else None
@@ -976,12 +885,12 @@ def add_child():
         
         conn = get_db()
         c = conn.cursor()
-        c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (?, ?, ?, ?)',
+        c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (%s, %s, %s, %s) RETURNING id',
                   (session['parent_id'], name, hash_password(pin), avatar))
-        child_id = c.lastrowid
+        child_id = c.fetchone()[0]
         
         # Initialize progress for table_1 (first table is always unlocked)
-        c.execute('INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken) VALUES (?, ?, 0, 0, 0)',
+        c.execute('INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken) VALUES (%s, %s, 0, 0, 0)',
                   (child_id, 'table_1'))
         conn.commit()
         conn.close()
@@ -1014,7 +923,7 @@ def child_login():
         
         conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT * FROM children WHERE name = ? AND pin_hash = ?',
+        c.execute('SELECT * FROM children WHERE name = %s AND pin_hash = %s',
                   (name, hash_password(pin)))
         child = c.fetchone()
         conn.close()
@@ -1050,7 +959,7 @@ def student_dashboard():
     # Get day streak
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT day_streak, last_active_date FROM children WHERE id = ?', (child_id,))
+    c.execute('SELECT day_streak, last_active_date FROM children WHERE id = %s', (child_id,))
     child_row = c.fetchone()
     conn.close()
     day_streak = child_row['day_streak'] if child_row else 0
@@ -1205,7 +1114,7 @@ def submit_table_quiz():
     # Save result
     conn = get_db()
     c = conn.cursor()
-    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (?, ?, ?, ?)',
+    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (%s, %s, %s, %s)',
               (child_id, topic, score, total))
     
     pct = int(score / total * 100)
@@ -1356,7 +1265,7 @@ def submit_division_quiz():
     # Save result
     conn = get_db()
     c = conn.cursor()
-    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (?, ?, ?, ?)',
+    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (%s, %s, %s, %s)',
               (child_id, topic, score, total))
     
     pct = int(score / total * 100)
@@ -1475,7 +1384,7 @@ def submit_addition_quiz():
         })
     conn = get_db()
     c = conn.cursor()
-    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (?, ?, ?, ?)',
+    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (%s, %s, %s, %s)',
               (child_id, topic, score, total))
     pct = int(score / total * 100)
     passed = pct >= 80
@@ -1589,7 +1498,7 @@ def submit_subtraction_quiz():
         })
     conn = get_db()
     c = conn.cursor()
-    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (?, ?, ?, ?)',
+    c.execute('INSERT INTO quiz_results (child_id, topic, score, total) VALUES (%s, %s, %s, %s)',
               (child_id, topic, score, total))
     pct = int(score / total * 100)
     passed = pct >= 80
@@ -1699,7 +1608,7 @@ def exam_submit():
     if passed:
         conn = get_db()
         c = conn.cursor()
-        c.execute('SELECT p.email, p.name as parent_name, ch.name as child_name FROM children ch JOIN parents p ON ch.parent_id = p.id WHERE ch.id = ?', (child_id,))
+        c.execute('SELECT p.email, p.name as parent_name, ch.name as child_name FROM children ch JOIN parents p ON ch.parent_id = p.id WHERE ch.id = %s', (child_id,))
         parent = c.fetchone()
         conn.close()
         if parent:
@@ -1837,14 +1746,14 @@ def certificate(child_id):
         exam = type('obj', (object,), {'score': 58, 'percentage': 97, 'taken_at': datetime.datetime(2026, 4, 12)})()
         child_name = "Alex Thompson"
     else:
-        c.execute('SELECT * FROM children WHERE id = ? AND parent_id = ?', (child_id, session['parent_id']))
+        c.execute('SELECT * FROM children WHERE id = %s AND parent_id = %s', (child_id, session['parent_id']))
         child = c.fetchone()
         if not child:
             conn.close()
             return redirect('/parent/dashboard')
         
         # Get best exam result
-        c.execute('SELECT * FROM exam_results WHERE child_id = ? AND passed = 1 ORDER BY percentage DESC LIMIT 1', (child_id,))
+        c.execute('SELECT * FROM exam_results WHERE child_id = %s AND passed = 1 ORDER BY percentage DESC LIMIT 1', (child_id,))
         exam = c.fetchone()
         
         # Get all table progress
@@ -1885,7 +1794,7 @@ def parent_advice():
     
     conn = get_db()
     c = conn.cursor()
-    c.execute('SELECT * FROM children WHERE id = ?', (child_id,))
+    c.execute('SELECT * FROM children WHERE id = %s', (child_id,))
     child = c.fetchone()
     if not child:
         conn.close()
@@ -2207,7 +2116,7 @@ def stripe_webhook():
                 try:
                     conn = get_db()
                     c = conn.cursor()
-                    c.execute('INSERT OR IGNORE INTO access_codes (code, used) VALUES (?, 0)', (access_code,))
+                    c.execute('INSERT OR IGNORE INTO access_codes (code, used) VALUES (%s, 0)', (access_code,))
                     conn.commit()
                     conn.close()
                 except Exception as db_err:

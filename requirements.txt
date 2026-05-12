@@ -13,4 +13,6 @@ idna==3.11
 charset-normalizer==3.4.6
 edge-tts==7.2.8
 Pillow==12.2.0
+psycopg2-binary==2.9.10
+psycopg2-binary==2.9.10
 aiosqlite==0.22.1
