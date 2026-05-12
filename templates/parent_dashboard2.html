@@ -110,6 +110,14 @@
 <div class="pdashboard">
 <div class="top-bar no-print"><a href="/parent/logout" class="btn-logout">Logout</a></div>
 <div class="pd-header"><h1>Parent Dashboard</h1><p>Track and support your child maths journey</p></div>
+{% if children|length == 0 %}
+<div style="background:white;border-radius:20px;padding:40px 32px;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.12);max-width:560px;margin:0 auto 24px;">
+<div style="font-size:64px;margin-bottom:16px;">👶</div>
+<h2 style="font-size:24px;font-weight:900;color:#1E1B4B;margin-bottom:10px;">No children added yet</h2>
+<p style="color:#6B7280;font-size:16px;margin-bottom:28px;line-height:1.6;">Add your first child to get started with MathsQuest. They'll be able to play games, take quizzes and track their progress.</p>
+<a href="/parent/add-child" style="display:inline-block;background:linear-gradient(135deg,#7C3AED,#6D28D9);color:white;padding:14px 36px;border-radius:50px;font-size:16px;font-weight:800;text-decoration:none;box-shadow:0 6px 24px rgba(124,58,237,0.4);transition:transform 0.2s;">+ Add Your First Child</a>
+</div>
+{% endif %}
 {% if children|length > 1 %}<div class="child-selector no-print">{% for c in children %}<div class="child-chip{% if loop.first %} selected{% endif %}" data-child-id="{{ c.id }}" onclick="selectChild({{ c.id }}, this)"><span style="font-size:20px">{{ c.avatar }}</span> {{ c.name }}</div>{% endfor %}</div>{% endif %}
 {% for child in children %}
 <div class="dash-main{% if loop.first %} active{% endif %}" id="dash-{{ child.id }}">
