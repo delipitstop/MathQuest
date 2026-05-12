@@ -15,3 +15,8 @@ Press CTRL+C to quit
 127.0.0.1 - - [27/Apr/2026 19:11:40] "GET /static/images/screen-parent.png HTTP/1.1" 200 -
 127.0.0.1 - - [27/Apr/2026 19:11:40] "GET /static/images/hero-kids.png HTTP/1.1" 200 -
 127.0.0.1 - - [27/Apr/2026 19:11:40] "GET /static/images/screen-games.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 14:36:13] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 14:36:20] "GET /staff HTTP/1.1" 404 -
+127.0.0.1 - - [29/Apr/2026 14:36:20] "GET /summary HTTP/1.1" 404 -
+127.0.0.1 - - [29/Apr/2026 14:36:58] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 14:36:58] "GET /staff HTTP/1.1" 404 -
