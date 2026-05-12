@@ -807,6 +807,16 @@ def get_all_subtraction_progress(child_id):
 def index():
     return render_template('index.html')
 
+# ============ BARE DOMAIN REDIRECT ============
+# Redirect bare domain to www to avoid Railway SSL conflicts
+@app.before_request
+def redirect_bare_domain():
+    from flask import request
+    host = request.host
+    if host in ('mathquestv1.co.uk', 'mathquest-production-56b4.up.railway.app'):
+        from flask import redirect
+        return redirect('https://www.mathquestv1.co.uk' + request.path, code=301)
+
 @app.route('/parent/register/step1', methods=['GET', 'POST'])
 def parent_register_step1():
     """Step 1: Validate access code, then redirect to registration."""
