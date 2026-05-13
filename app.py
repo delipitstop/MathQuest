@@ -40,7 +40,7 @@ GUMROAD_PRODUCT_URL = 'YOUR_GUMROAD_PRODUCT_LINK_HERE'
 VALID_ACCESS_CODES = {
     'MQ2026HOME': True,
 }
-ACCESS_CODE_PRICE = '£5'
+ACCESS_CODE_PRICE = '£9.99'
 
 # ============ DATABASE SETUP ============
 def init_db():
@@ -786,25 +786,37 @@ def parent_register():
 @app.route('/parent/login', methods=['GET', 'POST'])
 def parent_login():
     if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('SELECT * FROM parents WHERE email = %s AND password_hash = %s',
-                  (email, hash_password(password)))
-        parent = c.fetchone()
-        conn.close()
-        
-        if parent:
-            if parent.get('has_access') == 0:
-                return render_template('parent_login.html',
-                                     needs_access=True,
-                                     error=None)
-            session['parent_id'] = parent['id']
-            return redirect('/parent/dashboard')
-        else:
-            return render_template('parent_login.html', error='Invalid email or password')
+        try:
+            email = request.form['email']
+            password = request.form['password']
+            
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('SELECT * FROM parents WHERE email = %s AND password_hash = %s',
+                      (email, hash_password(password)))
+            parent = c.fetchone()
+            conn.close()
+            
+            if parent:
+                if parent.get('has_access') == 0:
+                    return render_template('parent_login.html',
+                                         needs_access=True,
+                                         error=None)
+                session['parent_id'] = parent['id']
+                return redirect('/parent/dashboard')
+            else:
+                return render_template('parent_login.html', error='Invalid email or password')
+        except Exception as e:
+            import traceback
+            error_msg = f"Login error: {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)  # This will appear in Railway logs
+            if 'conn' in locals():
+                try:
+                    conn.close()
+                except:
+                    pass
+            # Return error page instead of 500
+            return f"<h1>Login Error</h1><p>{str(e)}</p><pre>{error_msg}</pre>", 500
     
     return render_template('parent_login.html')
 
@@ -886,6 +898,14 @@ def add_child():
             
             conn = get_db()
             c = conn.cursor()
+            
+            # Enforce 2 child maximum
+            c.execute('SELECT COUNT(*) FROM children WHERE parent_id = %s', (session['parent_id'],))
+            child_count = c.fetchone()[0]
+            if child_count >= 2:
+                conn.close()
+                return render_template('add_child.html', error='Maximum of 2 children per account reached.')
+            
             c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (%s, %s, %s, %s) RETURNING id',
                       (session['parent_id'], name, hash_password(pin), avatar))
             child_id = c.fetchone()[0]

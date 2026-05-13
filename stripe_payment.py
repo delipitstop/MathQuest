@@ -6,8 +6,8 @@ from pathlib import Path
 
 logger = logging.getLogger("stripe")
 PRODUCT_NAME = "MathQuest Home Access"
-PRODUCT_PRICE_PENCE = 500
-PRODUCT_DESCRIPTION = "Lifetime access for up to 4 children. One-time payment, no subscription."
+PRODUCT_PRICE_PENCE = 999
+PRODUCT_DESCRIPTION = "Lifetime access for up to 2 children. One-time payment, no subscription."
 
 def is_configured():
     key = os.environ.get("STRIPE_SECRET_KEY", "")
