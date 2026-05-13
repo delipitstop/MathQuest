@@ -86,9 +86,9 @@ h1{{color:white;font-size:24px;margin:0}}.b{{padding:32px}}
 <div class="b"><p>Hi!</p><p>Thank you for purchasing <strong>MathQuest Home Access</strong>!</p>
 <p>Your access code is:</p><div class="cbox"><div class="code">{code}</div></div>
 <p><strong>Next steps:</strong></p><ol class="steps">
-<li>Go to <strong>mathquest-fbkr.onrender.com/parent/register/step1</strong></li>
+<li>Go to <strong>www.mathquestv1.co.uk/parent/register/step1</strong></li>
 <li>Enter your access code</li><li>Create your parent account</li>
-<li>Add up to 4 children — you're all set!</li></ol>
+<li>Add up to 2 children — you're all set!</li></ol>
 <p>Questions? Reply to this email.</p><p><strong>The MathQuest Team</strong></p></div>
 <div class="f">MathQuest — Fun maths for kids<br>mathquest-fbkr.onrender.com</div></div></body></html>"""
 
@@ -98,10 +98,10 @@ def _build_text(code):
 Hi! Thank you for purchasing MathQuest Home Access.
 Your access code: {code}
 Next steps:
-1. Go to mathquest-fbkr.onrender.com/parent/register/step1
+1. Go to www.mathquestv1.co.uk/parent/register/step1
 2. Enter your access code
 3. Create your parent account
-4. Add up to 4 children
+4. Add up to 2 children
 Questions? Reply to this email.
 The MathQuest Team"""
 
@@ -126,7 +126,7 @@ def _send_yahoo(email, access_code):
         logger.error(f"Yahoo email failed: {e}")
         return False
 
-PENDING_FILE = Path(__file__).parent / "pending_payments.json"
+PENDING_FILE = Path("/tmp/pending_payments.json")
 
 def save_pending_payment(session_id, email, access_code):
     pending = {}
