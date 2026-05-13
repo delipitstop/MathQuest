@@ -879,23 +879,36 @@ def add_child():
         return redirect('/parent/login')
     
     if request.method == 'POST':
-        name = request.form['name']
-        pin = request.form['pin']
-        avatar = request.form.get('avatar', 'lion')
-        
-        conn = get_db()
-        c = conn.cursor()
-        c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (%s, %s, %s, %s) RETURNING id',
-                  (session['parent_id'], name, hash_password(pin), avatar))
-        child_id = c.fetchone()[0]
-        
-        # Initialize progress for table_1 (first table is always unlocked)
-        c.execute('INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken) VALUES (%s, %s, 0, 0, 0)',
-                  (child_id, 'table_1'))
-        conn.commit()
-        conn.close()
-        
-        return redirect('/parent/dashboard')
+        try:
+            name = request.form['name']
+            pin = request.form['pin']
+            avatar = request.form.get('avatar', 'lion')
+            
+            conn = get_db()
+            c = conn.cursor()
+            c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (%s, %s, %s, %s) RETURNING id',
+                      (session['parent_id'], name, hash_password(pin), avatar))
+            child_id = c.fetchone()[0]
+            
+            # Initialize progress for table_1 (first table is always unlocked)
+            c.execute('INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken) VALUES (%s, %s, 0, 0, 0)',
+                      (child_id, 'table_1'))
+            conn.commit()
+            conn.close()
+            
+            return redirect('/parent/dashboard')
+        except Exception as e:
+            import traceback
+            error_msg = f"Add child error: {str(e)}\n{traceback.format_exc()}"
+            print(error_msg)  # This will appear in Railway logs
+            if conn:
+                try:
+                    conn.rollback()
+                    conn.close()
+                except:
+                    pass
+            # Return error page instead of 500
+            return f"<h1>Error adding child</h1><p>{str(e)}</p><pre>{error_msg}</pre>", 500
     
     return render_template('add_child.html')
 
