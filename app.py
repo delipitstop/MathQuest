@@ -839,6 +839,11 @@ def parent_dashboard():
     children_data = []
     for child in children:
         child_dict = dict(child)
+        
+        # Use a fresh cursor per child to avoid cursor result set conflicts
+        child_conn = get_db()
+        child_c = child_conn.cursor()
+        
         child_dict['progress'] = get_child_progress(child['id'])
         child_dict['achievements'] = get_child_achievements(child['id'])
         child_dict['all_tables'] = get_all_table_progress(child['id'])
@@ -865,21 +870,22 @@ def parent_dashboard():
         child_dict['struggles'] = struggles
         
         # Quiz results history
-        c.execute('SELECT * FROM quiz_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 20',
+        child_c.execute('SELECT * FROM quiz_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 20',
                  (child['id'],))
-        child_dict['quiz_results'] = [dict(r) for r in c.fetchall()]
+        child_dict['quiz_results'] = [dict(r) for r in child_c.fetchall()]
         child_dict['progress_dict'] = {p['topic']: p for p in child_dict['progress']}
         
         # Best exam result (for certificate)
-        c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY percentage DESC LIMIT 1',
+        child_c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY percentage DESC LIMIT 1',
                  (child['id'],))
-        exam = c.fetchone()
+        exam = child_c.fetchone()
         child_dict['exam_result'] = dict(exam) if exam else None
         child_dict['exam_passed'] = exam and exam['passed'] == 1 if exam else False
         
         # Total quizzes
         child_dict['total_quizzes'] = len(child_dict['quiz_results'])
         
+        child_conn.close()
         children_data.append(child_dict)
     
     conn.close()
