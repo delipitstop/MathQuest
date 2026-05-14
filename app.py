@@ -171,9 +171,9 @@ def mark_table_passed(child_id, table_num, score):
     pct = int(score / 10 * 100)
     c.execute('''
         INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken)
-        VALUES (?, ?, 12, ?, 1)
+        VALUES (%s, %s, 12, %s, 1)
         ON CONFLICT(child_id, topic) DO UPDATE SET
-        questions_completed = 12, quiz_score = MAX(quiz_score, ?), quiz_taken = 1,
+        questions_completed = 12, quiz_score = MAX(quiz_score, %s), quiz_taken = 1,
         last_activity = CURRENT_TIMESTAMP
     ''', (child_id, topic, pct, pct))
     conn.commit()
@@ -629,9 +629,9 @@ def mark_division_passed(child_id, table_num, score):
     pct = int(score / 10 * 100)
     c.execute('''
         INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken)
-        VALUES (?, ?, 12, ?, 1)
+        VALUES (%s, %s, 12, %s, 1)
         ON CONFLICT(child_id, topic) DO UPDATE SET
-        questions_completed = 12, quiz_score = MAX(quiz_score, ?), quiz_taken = 1,
+        questions_completed = 12, quiz_score = MAX(quiz_score, %s), quiz_taken = 1,
         last_activity = CURRENT_TIMESTAMP
     ''', (child_id, topic, pct, pct))
     conn.commit()
@@ -663,9 +663,9 @@ def mark_addition_passed(child_id, table_num, score):
     pct = int(score / 10 * 100)
     c.execute('''
         INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken)
-        VALUES (?, ?, 12, ?, 1)
+        VALUES (%s, %s, 12, %s, 1)
         ON CONFLICT(child_id, topic) DO UPDATE SET
-        questions_completed = 12, quiz_score = MAX(quiz_score, ?), quiz_taken = 1,
+        questions_completed = 12, quiz_score = MAX(quiz_score, %s), quiz_taken = 1,
         last_activity = CURRENT_TIMESTAMP
     ''', (child_id, topic, pct, pct))
     conn.commit()
@@ -696,9 +696,9 @@ def mark_subtraction_passed(child_id, table_num, score):
     pct = int(score / 10 * 100)
     c.execute('''
         INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken)
-        VALUES (?, ?, 12, ?, 1)
+        VALUES (%s, %s, 12, %s, 1)
         ON CONFLICT(child_id, topic) DO UPDATE SET
-        questions_completed = 12, quiz_score = MAX(quiz_score, ?), quiz_taken = 1,
+        questions_completed = 12, quiz_score = MAX(quiz_score, %s), quiz_taken = 1,
         last_activity = CURRENT_TIMESTAMP
     ''', (child_id, topic, pct, pct))
     conn.commit()
@@ -1750,7 +1750,7 @@ def api_update_table_progress():
     c = conn.cursor()
     c.execute('''
         INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken)
-        VALUES (?, ?, 1, 0, 0)
+        VALUES (%s, %s, 1, 0, 0)
         ON CONFLICT(child_id, topic) DO UPDATE SET
         questions_completed = questions_completed + 1,
         last_activity = CURRENT_TIMESTAMP
