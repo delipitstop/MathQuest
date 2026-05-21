@@ -44,8 +44,27 @@ ACCESS_CODE_PRICE = '£9.99'
 
 # ============ DATABASE SETUP ============
 def init_db():
-    # Tables created manually in Neon PostgreSQL — no-op here
-    pass
+    """Migrate DB schema — adds missing columns if they don't exist."""
+    try:
+        conn = get_db()
+        c = conn.cursor()
+        # Add day_streak and last_active_date to children table if missing
+        for col, coltype in [
+            ('day_streak', 'INTEGER DEFAULT 0'),
+            ('last_active_date', 'TEXT DEFAULT NULL'),
+        ]:
+            try:
+                c.execute(f'ALTER TABLE children ADD COLUMN {col} {coltype}')
+                conn.commit()
+                print(f'[init_db] Added column: {col}')
+            except psycopg2.errors.DuplicateColumn:
+                pass  # Already exists, fine
+        conn.close()
+    except Exception as e:
+        print(f'[init_db] Migration error (non-fatal): {e}')
+
+# Run migrations on startup (idempotent — safe to call every boot)
+init_db()
 
 # init_db() intentionally not called — tables exist in Neon
 
@@ -273,7 +292,7 @@ def save_exam_result(child_id, score, total, passed, answers_json):
         RETURNING id
     ''', (child_id, score, total, pct, passed, answers_json))
     conn.commit()
-    exam_id = c.fetchone()[0]
+    exam_id = c.fetchone()['id']
     conn.close()
     if passed:
         award_badge(child_id, 'exam_passed')
@@ -769,7 +788,7 @@ def parent_register():
                      RETURNING id''',
                   (name, email, hash_password(password), validated_code))
         conn.commit()
-        parent_id = c.fetchone()[0]
+        parent_id = c.fetchone()['id']
         
         # Mark access code as used
         use_access_code(validated_code)
@@ -826,6 +845,35 @@ def parent_logout():
     return redirect('/parent/login')
 
 @app.route('/parent/dashboard')
+def _batch_progress(conn, child_id):
+    """Fetch all progress for a child using ONE query per operation type."""
+    results = {}
+    for topic_table, topic_col in [
+        ('progress', 'topic'),
+    ]:
+        c = conn.cursor()
+        c.execute('SELECT topic, questions_completed, quiz_score, quiz_taken FROM progress WHERE child_id = %s', (child_id,))
+        rows = c.fetchall()
+        for row in rows:
+            results[row['topic']] = dict(row)
+    return results
+
+def _batch_achievements(conn, child_id):
+    c = conn.cursor()
+    c.execute('SELECT badge, awarded_at FROM achievements WHERE child_id = %s', (child_id,))
+    return [dict(r) for r in c.fetchall()]
+
+def _batch_quiz_results(conn, child_id):
+    c = conn.cursor()
+    c.execute('SELECT * FROM quiz_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 20', (child_id,))
+    return [dict(r) for r in c.fetchall()]
+
+def _batch_exam_result(conn, child_id):
+    c = conn.cursor()
+    c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY percentage DESC LIMIT 1', (child_id,))
+    row = c.fetchone()
+    return dict(row) if row else None
+
 def parent_dashboard():
     if 'parent_id' not in session:
         return redirect('/parent/login')
@@ -839,53 +887,59 @@ def parent_dashboard():
     children_data = []
     for child in children:
         child_dict = dict(child)
+        child_id = child['id']
         
-        # Use a fresh cursor per child to avoid cursor result set conflicts
-        child_conn = get_db()
-        child_c = child_conn.cursor()
+        # Fetch all progress data using shared connection (no new connections)
+        child_dict['progress'] = _batch_progress(conn, child_id)
+        child_dict['achievements'] = _batch_achievements(conn, child_id)
         
-        child_dict['progress'] = get_child_progress(child['id'])
-        child_dict['achievements'] = get_child_achievements(child['id'])
-        child_dict['all_tables'] = get_all_table_progress(child['id'])
-        child_dict['all_division'] = get_all_division_progress(child['id'])
-        child_dict['all_addition'] = get_all_addition_progress(child['id'])
-        child_dict['all_subtraction'] = get_all_subtraction_progress(child['id'])
+        # Operation progress via batched queries using the shared connection
+        for op_name, topic_prefix in [
+            ('all_tables', 'table_'),
+            ('all_division', 'division_'),
+            ('all_addition', 'addition_'),
+            ('all_subtraction', 'subtraction_'),
+        ]:
+            op_progress = {}
+            c2 = conn.cursor()
+            c2.execute('SELECT topic, questions_completed, quiz_score, quiz_taken FROM progress WHERE child_id = %s AND topic LIKE %s', (child_id, topic_prefix + '%'))
+            for row in c2.fetchall():
+                try:
+                    table_num = int(row['topic'].split('_')[1])
+                    op_progress[table_num] = dict(row)
+                except (ValueError, IndexError):
+                    pass
+            # Fill in missing tables 1-15
+            for i in range(1, 16):
+                if i not in op_progress:
+                    op_progress[i] = {'topic': f'{topic_prefix}{i}', 'questions_completed': 0, 'quiz_score': 0, 'quiz_taken': 0}
+            child_dict[op_name] = op_progress
         
-        # Count passed tables per operation
-        mult_passed = sum(1 for i in range(1, 16) if child_dict['all_tables'][i]['quiz_score'] >= 80)
-        div_passed = sum(1 for i in range(1, 16) if child_dict['all_division'][i]['quiz_score'] >= 80)
-        add_passed = sum(1 for i in range(1, 16) if child_dict['all_addition'][i]['quiz_score'] >= 80)
-        sub_passed = sum(1 for i in range(1, 16) if child_dict['all_subtraction'][i]['quiz_score'] >= 80)
+        # Count passed tables
+        mult_passed = sum(1 for i in range(1, 16) if child_dict['all_tables'].get(i, {}).get('quiz_score', 0) >= 80)
+        div_passed = sum(1 for i in range(1, 16) if child_dict['all_division'].get(i, {}).get('quiz_score', 0) >= 80)
+        add_passed = sum(1 for i in range(1, 16) if child_dict['all_addition'].get(i, {}).get('quiz_score', 0) >= 80)
+        sub_passed = sum(1 for i in range(1, 16) if child_dict['all_subtraction'].get(i, {}).get('quiz_score', 0) >= 80)
         child_dict['mult_passed'] = mult_passed
         child_dict['div_passed'] = div_passed
         child_dict['add_passed'] = add_passed
         child_dict['sub_passed'] = sub_passed
         
-        # Struggling topics (quiz_score < 60%)
+        # Struggling topics
         struggles = []
-        for p in child_dict['progress']:
-            if p['quiz_score'] > 0 and p['quiz_score'] < 60:
-                topic_name = p['topic'].replace('_', ' ').replace('table', 'Table').replace('div', '÷ ').replace('add', '+ ').replace('sub', '− ')
+        for topic, p in child_dict['progress'].items():
+            if p.get('quiz_score', 0) > 0 and p.get('quiz_score', 0) < 60:
+                topic_name = topic.replace('_', ' ').replace('table', 'Table').replace('div', '÷ ').replace('add', '+ ').replace('sub', '− ')
                 struggles.append({'topic': topic_name, 'score': p['quiz_score']})
         child_dict['struggles'] = struggles
         
-        # Quiz results history
-        child_c.execute('SELECT * FROM quiz_results WHERE child_id = %s ORDER BY taken_at DESC LIMIT 20',
-                 (child['id'],))
-        child_dict['quiz_results'] = [dict(r) for r in child_c.fetchall()]
-        child_dict['progress_dict'] = {p['topic']: p for p in child_dict['progress']}
-        
-        # Best exam result (for certificate)
-        child_c.execute('SELECT * FROM exam_results WHERE child_id = %s ORDER BY percentage DESC LIMIT 1',
-                 (child['id'],))
-        exam = child_c.fetchone()
-        child_dict['exam_result'] = dict(exam) if exam else None
-        child_dict['exam_passed'] = exam and exam['passed'] == 1 if exam else False
-        
-        # Total quizzes
+        # Quiz results + exam using shared connection
+        child_dict['quiz_results'] = _batch_quiz_results(conn, child_id)
+        child_dict['exam_result'] = _batch_exam_result(conn, child_id)
+        child_dict['exam_passed'] = child_dict['exam_result'] and child_dict['exam_result'].get('passed') == 1
         child_dict['total_quizzes'] = len(child_dict['quiz_results'])
+        child_dict['progress_dict'] = child_dict['progress']
         
-        child_conn.close()
         children_data.append(child_dict)
     
     conn.close()
@@ -907,14 +961,14 @@ def add_child():
             
             # Enforce 2 child maximum
             c.execute('SELECT COUNT(*) FROM children WHERE parent_id = %s', (session['parent_id'],))
-            child_count = c.fetchone()[0]
+            child_count = c.fetchone()['count']
             if child_count >= 2:
                 conn.close()
                 return render_template('add_child.html', error='Maximum of 2 children per account reached.')
             
             c.execute('INSERT INTO children (parent_id, name, pin_hash, avatar) VALUES (%s, %s, %s, %s) RETURNING id',
                       (session['parent_id'], name, hash_password(pin), avatar))
-            child_id = c.fetchone()[0]
+            child_id = c.fetchone()['id']
             
             # Initialize progress for table_1 (first table is always unlocked)
             c.execute('INSERT INTO progress (child_id, topic, questions_completed, quiz_score, quiz_taken) VALUES (%s, %s, 0, 0, 0)',
@@ -2120,9 +2174,45 @@ def payment_success():
         if pending:
             email = pending.get('email', '')
     
-    return render_template('payment_success.html',
-                         email=email or session_id,
-                         session_id=session_id)
+@app.route('/api/access-code', methods=['GET'])
+def api_access_code():
+    """Return the access code for a given Stripe session ID. Used by payment_success page."""
+    session_id = request.args.get('session', '')
+    if not session_id:
+        return jsonify({'error': 'session required'}), 400
+
+    # Try DB first
+    pending = stripe_payment.get_pending_payment(session_id)
+    if pending and pending.get('access_code'):
+        return jsonify({'code': pending['access_code']})
+
+    # If not found and webhook hasn't fired yet, generate from Stripe directly
+    if not pending:
+        try:
+            import stripe
+            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY', '')
+            session = stripe.checkout.Session.retrieve(session_id)
+            if session.payment_status == 'paid':
+                buyer_email = (session.customer_email or
+                               (session.customer_details or {}).get('email', ''))
+                access_code = 'MQ' + str(uuid.uuid4())[:8].upper()
+                # Store it
+                stripe_payment.save_pending_payment(session_id, buyer_email, access_code)
+                stripe_payment.mark_email_sent(session_id)
+                # Also register in access_codes table
+                try:
+                    conn = get_db()
+                    c = conn.cursor()
+                    c.execute('INSERT OR IGNORE INTO access_codes (code, used) VALUES (%s, 0)', (access_code,))
+                    conn.commit()
+                    conn.close()
+                except:
+                    pass
+                return jsonify({'code': access_code})
+        except Exception as e:
+            logging.error(f'access-code API error: {e}')
+
+    return jsonify({'error': 'code not found'}), 404
 
 
 @app.route('/api/stripe-webhook', methods=['POST'])
@@ -2145,12 +2235,19 @@ def stripe_webhook():
         session_id = session_obj.get('id', '')
         buyer_email = (session_obj.get('customer_email', '') or
                        session_obj.get('customer_details', {}).get('email', ''))
-        
+
+        # Idempotency: if email already sent for this session, acknowledge without reprocessing
+        if stripe_payment.is_payment_processed(session_id):
+            logging.info(f"Session {session_id} already processed — skipping")
+            return jsonify({'received': True, 'status': 'already_processed'})
+
         pending = stripe_payment.get_pending_payment(session_id)
         if pending and buyer_email:
             access_code = pending.get('access_code', '')
             if access_code:
                 stripe_payment.send_access_code_email(buyer_email, access_code)
+                stripe_payment.mark_payment_webhook_fired(session_id)
+                stripe_payment.mark_email_sent(session_id)
                 # Register code in DB
                 try:
                     conn = get_db()
@@ -2160,11 +2257,33 @@ def stripe_webhook():
                     conn.close()
                 except Exception as db_err:
                     logging.error(f"DB error: {db_err}")
-                stripe_payment.remove_pending_payment(session_id)
                 logging.info(f"Access code {access_code} sent to {buyer_email}")
-    
+        else:
+            # Stripe webhook fired but no pending record — Stripe may have fired before we saved pending
+            # Use Stripe API directly to verify payment was made
+            logging.warning(f"No pending record for session {session_id} — verifying with Stripe directly")
+            try:
+                import stripe
+                stripe.api_key = os.environ.get("STRIPE_SECRET_KEY", "")
+                session = stripe.checkout.Session.retrieve(session_id)
+                if session.payment_status == 'paid':
+                    # Payment confirmed — generate access code and send email
+                    access_code = 'MQ' + str(uuid.uuid4())[:8].upper()
+                    stripe_payment.send_access_code_email(buyer_email, access_code)
+                    stripe_payment.mark_email_sent(session_id)
+                    conn = get_db()
+                    c = conn.cursor()
+                    c.execute('INSERT OR IGNORE INTO access_codes (code, used) VALUES (%s, 0)', (access_code,))
+                    conn.commit()
+                    conn.close()
+                    logging.info(f"Fallback: access code {access_code} sent to {buyer_email} for session {session_id}")
+            except Exception as stripe_err:
+                logging.error(f"Stripe direct verify failed: {stripe_err}")
+
     return jsonify({'received': True})
 
+
+stripe_payment.init_payment_db()
 
 if __name__ == '__main__':
     import os
