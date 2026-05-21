@@ -846,17 +846,10 @@ def parent_logout():
 
 @app.route('/parent/dashboard')
 def _batch_progress(conn, child_id):
-    """Fetch all progress for a child using ONE query per operation type."""
-    results = {}
-    for topic_table, topic_col in [
-        ('progress', 'topic'),
-    ]:
-        c = conn.cursor()
-        c.execute('SELECT topic, questions_completed, quiz_score, quiz_taken FROM progress WHERE child_id = %s', (child_id,))
-        rows = c.fetchall()
-        for row in rows:
-            results[row['topic']] = dict(row)
-    return results
+    """Fetch all progress for a child using ONE query."""
+    c = conn.cursor()
+    c.execute('SELECT topic, questions_completed, quiz_score, quiz_taken FROM progress WHERE child_id = %s', (child_id,))
+    return {row['topic']: dict(row) for row in c.fetchall()}
 
 def _batch_achievements(conn, child_id):
     c = conn.cursor()
@@ -879,6 +872,71 @@ def parent_dashboard():
         return redirect('/parent/login')
     
     parent_id = session['parent_id']
+    conn = get_db()
+    c = conn.cursor()
+    c.execute('SELECT * FROM children WHERE parent_id = %s', (parent_id,))
+    children = c.fetchall()
+    
+    children_data = []
+    for child in children:
+        child_dict = dict(child)
+        child_id = child['id']
+        
+        # Fetch all progress data using shared connection (no new connections)
+        child_dict['progress'] = _batch_progress(conn, child_id)
+        child_dict['achievements'] = _batch_achievements(conn, child_id)
+        
+        # Operation progress via batched queries using the shared connection
+        for op_name, topic_prefix in [
+            ('all_tables', 'table_'),
+            ('all_division', 'division_'),
+            ('all_addition', 'addition_'),
+            ('all_subtraction', 'subtraction_'),
+        ]:
+            op_progress = {}
+            c2 = conn.cursor()
+            c2.execute('SELECT topic, questions_completed, quiz_score, quiz_taken FROM progress WHERE child_id = %s AND topic LIKE %s', (child_id, topic_prefix + '%'))
+            for row in c2.fetchall():
+                try:
+                    table_num = int(row['topic'].split('_')[1])
+                    op_progress[table_num] = dict(row)
+                except (ValueError, IndexError):
+                    pass
+            # Fill in missing tables 1-15
+            for i in range(1, 16):
+                if i not in op_progress:
+                    op_progress[i] = {'topic': f'{topic_prefix}{i}', 'questions_completed': 0, 'quiz_score': 0, 'quiz_taken': 0}
+            child_dict[op_name] = op_progress
+        
+        # Count passed tables
+        mult_passed = sum(1 for i in range(1, 16) if child_dict['all_tables'].get(i, {}).get('quiz_score', 0) >= 80)
+        div_passed = sum(1 for i in range(1, 16) if child_dict['all_division'].get(i, {}).get('quiz_score', 0) >= 80)
+        add_passed = sum(1 for i in range(1, 16) if child_dict['all_addition'].get(i, {}).get('quiz_score', 0) >= 80)
+        sub_passed = sum(1 for i in range(1, 16) if child_dict['all_subtraction'].get(i, {}).get('quiz_score', 0) >= 80)
+        child_dict['mult_passed'] = mult_passed
+        child_dict['div_passed'] = div_passed
+        child_dict['add_passed'] = add_passed
+        child_dict['sub_passed'] = sub_passed
+        
+        # Struggling topics
+        struggles = []
+        for topic, p in child_dict['progress'].items():
+            if p.get('quiz_score', 0) > 0 and p.get('quiz_score', 0) < 60:
+                topic_name = topic.replace('_', ' ').replace('table', 'Table').replace('div', '÷ ').replace('add', '+ ').replace('sub', '− ')
+                struggles.append({'topic': topic_name, 'score': p['quiz_score']})
+        child_dict['struggles'] = struggles
+        
+        # Quiz results + exam using shared connection
+        child_dict['quiz_results'] = _batch_quiz_results(conn, child_id)
+        child_dict['exam_result'] = _batch_exam_result(conn, child_id)
+        child_dict['exam_passed'] = child_dict['exam_result'] and child_dict['exam_result'].get('passed') == 1
+        child_dict['total_quizzes'] = len(child_dict['quiz_results'])
+        child_dict['progress_dict'] = child_dict['progress']
+        
+        children_data.append(child_dict)
+    
+    conn.close()
+    return render_template('parent_dashboard2.html', children=children_data)
     conn = get_db()
     c = conn.cursor()
     c.execute('SELECT * FROM children WHERE parent_id = %s', (parent_id,))
